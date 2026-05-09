@@ -43,7 +43,8 @@ app.use(generalLimiter);
 const authRoutes = require('./routes/auth');
 const noteRoutes = require('./routes/notes');
 require('./reminder'); 
-
+// Health check - keep alive
+app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/notes', noteRoutes);
 
