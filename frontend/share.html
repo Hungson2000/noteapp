@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoteApp - Xem ghi chú</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .share-container {
+      max-width: 700px;
+      margin: 60px auto;
+      padding: 20px;
+    }
+    .share-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .share-header h1 {
+      color: var(--primary);
+      font-size: 28px;
+    }
+    .share-card {
+      background: var(--card-bg);
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .share-card h2 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .share-card p {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+    }
+    .share-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 16px;
+    }
+    .share-tag {
+      padding: 4px 12px;
+      background: var(--primary);
+      color: white;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    .share-date {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .share-footer {
+      text-align: center;
+      margin-top: 24px;
+    }
+    .share-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--text-muted);
+    }
+    .error {
+      text-align: center;
+      padding: 60px;
+      color: #e53e3e;
+    }
+  </style>
+</head>
+<body>
+  <div class="share-container">
+    <div class="share-header">
+      <h1>📝 NoteApp</h1>
+      <p style="color:var(--text-muted)">Ghi chú được chia sẻ</p>
+    </div>
+    <div id="content" class="loading">⏳ Đang tải...</div>
+    <div class="share-footer">
+      <a href="index.html">➕ Tạo ghi chú của riêng bạn</a>
+    </div>
+  </div>
+
+  <script>
+    const API = 'https://noteapp-backend-goqh.onrender.com/api';
+
+    async function loadSharedNote() {
+      const params = new URLSearchParams(window.location.search);
+      const shareId = params.get('id');
+
+      if (!shareId) {
+        document.getElementById('content').innerHTML = '<p class="error">❌ Không tìm thấy ghi chú!</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/notes/share/${shareId}`);
+        if (!res.ok) {
+          document.getElementById('content').innerHTML = '<p class="error">❌ Ghi chú không tồn tại hoặc đã bị xóa!</p>';
+          return;
+        }
+        const note = await res.json();
+        document.title = `${note.title} - NoteApp`;
+        document.getElementById('content').innerHTML = `
+          <div class="share-card" style="border-left: 4px solid #4f46e5; background: ${note.color || '#ffffff'}">
+            <h2>${note.title}</h2>
+            <p>${note.content}</p>
+            ${note.tags?.length ? `
+              <div class="share-tags">
+                ${note.tags.map(t => `<span class="share-tag">#${t}</span>`).join('')}
+              </div>` : ''}
+            <p class="share-date">📅 ${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById('content').innerHTML = '<p class="error">❌ Lỗi kết nối server!</p>';
+      }
+    }
+
+    loadSharedNote();
+  </script>
+</body>
+</html>

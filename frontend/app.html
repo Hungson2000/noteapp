@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="NoteApp">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoteApp</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>📝 NoteApp</h2>
+        <button class="btn-toggle-sidebar" onclick="toggleSidebar()">☰</button>
+      </div>
+      <div class="avatar-section">
+        <div class="avatar-placeholder" id="avatar-display" onclick="document.getElementById('avatar-input').click()">👤</div>
+        <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(event)">
+        <small style="opacity:0.7; font-size:11px;">Click để đổi ảnh</small>
+      </div>
+      <p style="text-align:center">Xin chào, <strong><span id="username-display"></span></strong>!</p>
+      <div class="stats-box" id="stats-box">
+        <div class="stat-item"><div class="stat-number" id="stat-total">0</div><div class="stat-label">Ghi chú</div></div>
+        <div class="stat-item"><div class="stat-number" id="stat-pinned">0</div><div class="stat-label">Đã ghim</div></div>
+        <div class="stat-item"><div class="stat-number" id="stat-shared">0</div><div class="stat-label">Đã chia sẻ</div></div>
+        <div class="stat-item"><div class="stat-number" id="stat-tags">0</div><div class="stat-label">Tags</div></div>
+      </div>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="🔍 Tìm kiếm..." oninput="searchNotes()">
+      </div>
+      <div class="tags-filter" id="tags-filter"></div>
+      <button class="btn-sidebar" onclick="toggleTrash()">🗑️ Thùng rác <span id="trash-count" style="background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:10px;font-size:11px;">0</span></button>
+      <button class="btn-sidebar" onclick="toggleExportMenu()">📥 Export ghi chú</button>
+      <div id="export-menu" style="display:none;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+        <button onclick="exportTXT()" class="btn-sidebar-save" style="margin-bottom:6px;">📄 Export TXT</button>
+        <button onclick="exportPDF()" class="btn-sidebar-save">📑 Export PDF</button>
+      </div>
+      <button class="btn-sidebar" onclick="showReminders()">⏰ Nhắc nhở</button>
+      <button class="btn-sidebar" id="install-btn" style="display:none" onclick="installApp()">📲 Cài đặt App</button>
+      <button class="btn-sidebar" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      <button class="btn-sidebar" onclick="toggleForm('update-form')">⚙️ Đổi thông tin</button>
+      <div id="update-form" style="display:none;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;margin-bottom:4px;">
+        <input type="text" id="new-username" placeholder="Username mới" class="sidebar-input">
+        <input type="email" id="new-email" placeholder="Email mới" class="sidebar-input">
+        <button onclick="updateProfile()" class="btn-sidebar-save">💾 Lưu</button>
+        <button onclick="toggleForm('update-form')" class="btn-sidebar-cancel" style="margin-top:6px;">✕ Đóng</button>
+      </div>
+      <button class="btn-sidebar" onclick="toggleForm('password-form')">🔒 Đổi mật khẩu</button>
+      <div id="password-form" style="display:none;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;margin-bottom:4px;">
+        <input type="password" id="current-password" placeholder="Mật khẩu hiện tại" class="sidebar-input">
+        <input type="password" id="new-password" placeholder="Mật khẩu mới" class="sidebar-input">
+        <button onclick="changePassword()" class="btn-sidebar-save">💾 Lưu</button>
+        <button onclick="toggleForm('password-form')" class="btn-sidebar-cancel" style="margin-top:6px;">✕ Đóng</button>
+      </div>
+      <button class="btn-logout" onclick="logout()">🚪 Đăng xuất</button>
+    </div>
+    <div class="main-content">
+      <div class="main-header">
+        <h3>Ghi chú của tôi</h3>
+        <button class="btn-toggle-sidebar-mobile" onclick="toggleSidebar()">☰</button>
+      </div>
+      <div class="note-form">
+        <div class="note-form-row">
+          <input type="text" id="note-title" placeholder="Tiêu đề ghi chú...">
+          <input type="text" id="note-tags" placeholder="Tags (cách nhau bằng dấu phẩy)">
+        </div>
+        <div class="color-picker-row">
+          <label>🎨 Màu:</label>
+          <div class="color-option selected" style="background:#ffffff" data-color="#ffffff" onclick="selectColor(this)"></div>
+          <div class="color-option" style="background:#fef3c7" data-color="#fef3c7" onclick="selectColor(this)"></div>
+          <div class="color-option" style="background:#d1fae5" data-color="#d1fae5" onclick="selectColor(this)"></div>
+          <div class="color-option" style="background:#dbeafe" data-color="#dbeafe" onclick="selectColor(this)"></div>
+          <div class="color-option" style="background:#fce7f3" data-color="#fce7f3" onclick="selectColor(this)"></div>
+          <div class="color-option" style="background:#ede9fe" data-color="#ede9fe" onclick="selectColor(this)"></div>
+          <div class="color-option" style="background:#fee2e2" data-color="#fee2e2" onclick="selectColor(this)"></div>
+        </div>
+        <div class="editor-toolbar">
+          <button type="button" onclick="formatText('bold')"><b>B</b></button>
+          <button type="button" onclick="formatText('italic')"><i>I</i></button>
+          <button type="button" onclick="formatText('underline')"><u>U</u></button>
+          <button type="button" onclick="formatText('strikeThrough')"><s>S</s></button>
+          <span class="toolbar-divider"></span>
+          <button type="button" onclick="formatText('insertUnorderedList')">• List</button>
+          <button type="button" onclick="formatText('insertOrderedList')">1. List</button>
+          <span class="toolbar-divider"></span>
+          <button type="button" onclick="formatBlock('h2')">H2</button>
+          <button type="button" onclick="formatBlock('p')">¶</button>
+          <span class="toolbar-divider"></span>
+          <button type="button" onclick="clearFormat()">✕ Format</button>
+        </div>
+        <div id="note-content" class="rich-editor" contenteditable="true" placeholder="Nội dung ghi chú..."></div>
+        <button class="btn-primary" onclick="createNote()">➕ Thêm ghi chú</button>
+      </div>
+      <div id="notes-grid" class="notes-grid"></div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Trash Modal -->
+  <div class="modal-overlay" id="trash-modal" style="display:none">
+    <div class="modal-box" style="max-width:600px;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h4>🗑️ Thùng rác</h4>
+        <button onclick="emptyTrash()" style="padding:6px 12px;background:#e53e3e;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;">🗑️ Dọn sạch</button>
+      </div>
+      <div id="trash-grid" style="display:flex;flex-direction:column;gap:12px;"></div>
+      <button class="btn-close-modal" onclick="closeTrashModal()">Đóng</button>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal-overlay" id="share-modal" style="display:none">
+    <div class="modal-box">
+      <h4>📤 Chia sẻ ghi chú</h4>
+      <p style="margin-bottom:12px;font-size:13px;color:var(--text-muted)">Bất kỳ ai có link này đều có thể xem ghi chú của bạn</p>
+      <div class="share-link">
+        <input type="text" id="share-link-input" readonly>
+        <button class="btn-copy" onclick="copyShareLink()">📋 Copy</button>
+      </div>
+      <button class="btn-close-modal" onclick="closeShareModal()">Đóng</button>
+    </div>
+  </div>
+
+  <!-- Reminder Modal -->
+  <div id="reminder-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;">
+    <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;">⏰ Quản lý nhắc nhở</h3>
+        <button onclick="closeReminders()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div id="reminders-list"></div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.log('SW error:', err));
+      });
+    }
+  </script>
+</body>
+</html>

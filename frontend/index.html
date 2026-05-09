@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="NoteApp">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoteApp - Đăng nhập</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h1>📝 NoteApp</h1>
+
+      <!-- Tab switch -->
+      <div class="tab-switch">
+        <button class="tab-btn active" onclick="showTab('login')">Đăng nhập</button>
+        <button class="tab-btn" onclick="showTab('register')">Đăng ký</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login-form">
+        <input type="email" id="login-email" placeholder="Email" />
+        <input type="password" id="login-password" placeholder="Mật khẩu" />
+        <button class="btn-primary" onclick="login()">Đăng nhập</button>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-form" style="display:none">
+        <input type="text" id="reg-username" placeholder="Tên người dùng" />
+        <input type="email" id="reg-email" placeholder="Email" />
+        <input type="password" id="reg-password" placeholder="Mật khẩu" />
+        <button class="btn-primary" onclick="register()">Đăng ký</button>
+      </div>
+      <p style="text-align:center; margin-top:8px;">
+  <a href="#" onclick="showForgotForm()" style="color:var(--primary); font-size:13px;">Quên mật khẩu?</a>
+</p>
+
+<!-- Forgot Password Form -->
+<div id="forgot-form" style="display:none; margin-top:12px;">
+  <input type="email" id="forgot-email" placeholder="Nhập email của bạn">
+  <button class="btn-primary" onclick="forgotPassword()">📧 Gửi email đặt lại</button>
+  <p style="text-align:center; margin-top:8px;">
+    <a href="#" onclick="showForgotForm()" style="color:var(--primary); font-size:13px;">← Quay lại đăng nhập</a>
+  </p>
+</div>
+      <p id="auth-message" class="message"></p>
+    </div>
+  </div>
+  <script src="js/auth.js"></script>
+  <div class="toast-container" id="toast-container"></div>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registered'))
+        .catch(err => console.log('SW error:', err));
+    });
+  }
+</script>
+</body>
+</html>
