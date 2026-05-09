@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" data-theme="light">
 <head>
   <link rel="manifest" href="manifest.json">
@@ -10,6 +10,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NoteApp</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -92,8 +93,10 @@
           <button type="button" onclick="formatBlock('p')">¶</button>
           <span class="toolbar-divider"></span>
           <button type="button" onclick="clearFormat()">✕ Format</button>
+          <span class="toolbar-divider"></span>
+          <button type="button" id="preview-btn" onclick="toggleMarkdownPreview()" style="background:#4f46e5;color:white;border-radius:6px;padding:3px 8px;">👁️ Preview</button>
         </div>
-        <div id="note-content" class="rich-editor" contenteditable="true" placeholder="Nội dung ghi chú..."></div>
+        <div id="note-content" class="rich-editor" contenteditable="true" placeholder="Nội dung ghi chú... (hỗ trợ Markdown)"></div>
         <button class="btn-primary" onclick="createNote()">➕ Thêm ghi chú</button>
       </div>
       <div id="notes-grid" class="notes-grid"></div>

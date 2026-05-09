@@ -6,21 +6,21 @@ let activeTag = null;
 let currentPage = 1;
 const NOTES_PER_PAGE = 6;
 if (!token) window.location.href = 'index.html';
- 
+
 // Dark mode
 if (localStorage.getItem('darkMode') === 'true') {
   document.documentElement.setAttribute('data-theme', 'dark');
 }
- 
+
 document.getElementById('username-display').textContent = user?.username || 'User';
- 
+
 if (user?.avatar) {
   document.getElementById('avatar-display').innerHTML = `<img src="${user.avatar}" class="avatar-img">`;
 }
- 
+
 loadNotes();
 loadStats();
- 
+
 // ==================== TOAST ====================
 function showToast(message, type = 'info', duration = 3000) {
   const container = document.getElementById('toast-container');
@@ -34,7 +34,7 @@ function showToast(message, type = 'info', duration = 3000) {
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }
- 
+
 // ==================== NOTES ====================
 async function loadNotes(tag = null, page = 1) {
   try {
@@ -59,7 +59,7 @@ async function loadNotes(tag = null, page = 1) {
 function renderNotes(notes) {
   const grid = document.getElementById('notes-grid');
   if (notes.length === 0) {
-    grid.innerHTML = '<p class="empty-state">🔭 Chưa có ghi chú nào!</p>';
+    grid.innerHTML = '<p class="empty-state">📭 Chưa có ghi chú nào!</p>';
     return;
   }
   grid.innerHTML = notes.map(note => `
@@ -78,19 +78,17 @@ function renderNotes(notes) {
           ${note.tags.map(t => `<span class="note-tag">#${t}</span>`).join('')}
         </div>` : ''}
       <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
-      ${note.reminderAt ? `<div style="font-size:11px; color:#f59e0b; margin-bottom:6px;">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}</div>` : ''}
       <div class="note-card-actions">
         <button class="btn-edit" onclick="editNote('${note._id}', \`${note.title}\`, \`${note.content}\`, '${note.color}', '${note.tags?.join(',')}')">✏️ Sửa</button>
         <button class="btn-delete" onclick="deleteNote('${note._id}')">🗑️ Xóa</button>
         <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${note._id}', ${note.isShared}, '${note.shareId}')">
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
-        <button id="remind-btn-${note._id}" onclick="showReminderPicker('${note._id}')" title="Đặt nhắc nhở" style="background:none; border:1px solid var(--border); border-radius:6px; padding:4px 8px; cursor:pointer; font-size:13px;">⏰</button>
       </div>
     </div>
   `).join('');
 }
- 
+
 function renderTagsFilter(notes) {
   const allTags = [...new Set(notes.flatMap(n => n.tags || []))];
   const container = document.getElementById('tags-filter');
@@ -108,11 +106,14 @@ function renderPagination(totalPages, currentPage, tag) {
     container.innerHTML = '';
     return;
   }
- 
+
   let html = '';
+
+  // Nút Previous
   html += `<button class="page-btn" onclick="loadNotes('${tag}', ${currentPage - 1})" 
            ${currentPage === 1 ? 'disabled' : ''}>← Trước</button>`;
- 
+
+  // Các trang
   for (let i = 1; i <= totalPages; i++) {
     if (
       i === 1 ||
@@ -125,18 +126,20 @@ function renderPagination(totalPages, currentPage, tag) {
       html += `<span class="page-info">...</span>`;
     }
   }
- 
+
+  // Nút Next
   html += `<button class="page-btn" onclick="loadNotes('${tag}', ${currentPage + 1})"
            ${currentPage === totalPages ? 'disabled' : ''}>Sau →</button>`;
+
   html += `<span class="page-info">Trang ${currentPage}/${totalPages}</span>`;
- 
+
   container.innerHTML = html;
 }
 function filterByTag(tag) {
   activeTag = tag;
   loadNotes(tag, 1);
 }
- 
+
 async function loadStats() {
   try {
     const res = await fetch(`${API}/notes/stats`, {
@@ -151,7 +154,7 @@ async function loadStats() {
     console.error('Lỗi load stats:', err);
   }
 }
- 
+
 function selectColor(el) {
   document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
@@ -162,40 +165,40 @@ function formatText(command) {
   document.execCommand(command, false, null);
   document.getElementById('note-content').focus();
 }
- 
+
 function formatBlock(tag) {
   document.execCommand('formatBlock', false, tag);
   document.getElementById('note-content').focus();
 }
- 
+
 function clearFormat() {
   document.execCommand('removeFormat', false, null);
   document.getElementById('note-content').focus();
 }
- 
+
 function getEditorContent() {
   return document.getElementById('note-content').innerHTML;
 }
- 
+
 function setEditorContent(html) {
   document.getElementById('note-content').innerHTML = html;
 }
- 
+
 function clearEditor() {
   document.getElementById('note-content').innerHTML = '';
 }
- 
+
 async function createNote() {
   const title = document.getElementById('note-title').value.trim();
   const content = getEditorContent().trim();
   const tagsInput = document.getElementById('note-tags').value.trim();
   const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [];
- 
+
   if (!title || !content || content === '<br>') {
     showToast('Vui lòng điền tiêu đề và nội dung!', 'warning');
     return;
   }
- 
+
   try {
     const res = await fetch(`${API}/notes`, {
       method: 'POST',
@@ -217,7 +220,7 @@ async function createNote() {
     showToast('Lỗi kết nối server!', 'error');
   }
 }
- 
+
 function editNote(id, title, content, color, tags) {
   document.getElementById('note-title').value = title;
   setEditorContent(content);
@@ -231,13 +234,13 @@ function editNote(id, title, content, color, tags) {
   btn.onclick = () => updateNote(id);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
- 
+
 async function updateNote(id) {
   const title = document.getElementById('note-title').value.trim();
   const content = getEditorContent().trim();
   const tagsInput = document.getElementById('note-tags').value.trim();
   const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [];
- 
+
   try {
     const res = await fetch(`${API}/notes/${id}`, {
       method: 'PUT',
@@ -262,7 +265,7 @@ async function updateNote(id) {
     showToast('Lỗi kết nối server!', 'error');
   }
 }
- 
+
 async function deleteNote(id) {
   if (!confirm('Bạn có chắc muốn xóa ghi chú này?')) return;
   try {
@@ -279,7 +282,7 @@ async function deleteNote(id) {
     showToast('Lỗi kết nối server!', 'error');
   }
 }
- 
+
 async function togglePin(id, isPinned) {
   try {
     await fetch(`${API}/notes/${id}`, {
@@ -297,7 +300,7 @@ async function togglePin(id, isPinned) {
     showToast('Lỗi kết nối server!', 'error');
   }
 }
- 
+
 async function toggleShare(id, isShared, shareId) {
   try {
     const res = await fetch(`${API}/notes/${id}/share`, {
@@ -316,23 +319,23 @@ async function toggleShare(id, isShared, shareId) {
     showToast('Lỗi kết nối server!', 'error');
   }
 }
- 
+
 function showShareModal(shareId) {
-  const link = `https://noteapp-seven-kohl.vercel.app/share.html?id=${shareId}`;
+  const link = `https://noteapp-hungson.netlify.app/share.html?id=${shareId}`;
   document.getElementById('share-link-input').value = link;
   document.getElementById('share-modal').style.display = 'flex';
 }
- 
+
 function closeShareModal() {
   document.getElementById('share-modal').style.display = 'none';
 }
- 
+
 function copyShareLink() {
   const input = document.getElementById('share-link-input');
   navigator.clipboard.writeText(input.value);
   showToast('Đã copy link chia sẻ!', 'success');
 }
- 
+
 // ==================== SEARCH ====================
 function searchNotes() {
   const keyword = document.getElementById('search-input').value.toLowerCase();
@@ -343,7 +346,7 @@ function searchNotes() {
     card.style.display = title.includes(keyword) || content.includes(keyword) ? 'block' : 'none';
   });
 }
- 
+
 // ==================== UI ====================
 function toggleDarkMode() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -351,16 +354,16 @@ function toggleDarkMode() {
   localStorage.setItem('darkMode', !isDark);
   showToast(isDark ? '☀️ Light mode!' : '🌙 Dark mode!', 'info');
 }
- 
+
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
 }
- 
+
 function toggleForm(id) {
   const form = document.getElementById(id);
   form.style.display = form.style.display === 'none' ? 'block' : 'none';
 }
- 
+
 // ==================== AVATAR ====================
 async function uploadAvatar(event) {
   const file = event.target.files[0];
@@ -369,29 +372,31 @@ async function uploadAvatar(event) {
     showToast('Ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB', 'warning');
     return;
   }
-  try {
-    const formData = new FormData();
-    formData.append('avatar', file);
-    const res = await fetch(`${API}/auth/avatar`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const avatarUrl = data.user.avatar;
-      user.avatar = avatarUrl;
-      localStorage.setItem('user', JSON.stringify(user));
-      document.getElementById('avatar-display').innerHTML = `<img src="${avatarUrl}" class="avatar-img">`;
-      showToast('Cập nhật ảnh đại diện thành công!', 'success');
-    } else {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result;
+    try {
+      const res = await fetch(`${API}/auth/avatar`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ avatar: base64 })
+      });
+      if (res.ok) {
+        user.avatar = base64;
+        localStorage.setItem('user', JSON.stringify(user));
+        document.getElementById('avatar-display').innerHTML = `<img src="${base64}" class="avatar-img">`;
+        showToast('Cập nhật ảnh đại diện thành công!', 'success');
+      }
+    } catch (err) {
       showToast('Lỗi upload ảnh!', 'error');
     }
-  } catch (err) {
-    showToast('Lỗi upload ảnh!', 'error');
-  }
+  };
+  reader.readAsDataURL(file);
 }
- 
+
 // ==================== PROFILE ====================
 async function updateProfile() {
   const username = document.getElementById('new-username').value.trim();
@@ -423,7 +428,7 @@ async function updateProfile() {
     showToast('Lỗi kết nối server!', 'error');
   }
 }
- 
+
 async function changePassword() {
   const currentPassword = document.getElementById('current-password').value;
   const newPassword = document.getElementById('new-password').value;
@@ -458,7 +463,7 @@ async function changePassword() {
     showToast('Lỗi kết nối server!', 'error');
   }
 }
- 
+
 function logout() {
   localStorage.clear();
   window.location.href = 'index.html';
@@ -468,11 +473,11 @@ async function toggleTrash() {
   document.getElementById('trash-modal').style.display = 'flex';
   loadTrash();
 }
- 
+
 function closeTrashModal() {
   document.getElementById('trash-modal').style.display = 'none';
 }
- 
+
 async function loadTrash() {
   try {
     const res = await fetch(`${API}/notes/trash`, {
@@ -480,13 +485,15 @@ async function loadTrash() {
     });
     const notes = await res.json();
     const grid = document.getElementById('trash-grid');
+
+    // Cập nhật số lượng thùng rác
     document.getElementById('trash-count').textContent = notes.length;
- 
+
     if (notes.length === 0) {
       grid.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">Thùng rác trống!</p>';
       return;
     }
- 
+
     grid.innerHTML = notes.map(note => `
       <div style="background:var(--card-bg); padding:16px; border-radius:8px; border-left:4px solid #e53e3e;">
         <h4 style="color:var(--text); margin-bottom:6px;">${note.title}</h4>
@@ -510,7 +517,7 @@ async function loadTrash() {
     showToast('Lỗi tải thùng rác!', 'error');
   }
 }
- 
+
 async function restoreNote(id) {
   try {
     const res = await fetch(`${API}/notes/${id}/restore`, {
@@ -527,7 +534,7 @@ async function restoreNote(id) {
     showToast('Lỗi khôi phục!', 'error');
   }
 }
- 
+
 async function permanentDelete(id) {
   if (!confirm('Xóa vĩnh viễn? Không thể hoàn tác!')) return;
   try {
@@ -544,7 +551,7 @@ async function permanentDelete(id) {
     showToast('Lỗi xóa!', 'error');
   }
 }
- 
+
 async function emptyTrash() {
   if (!confirm('Dọn sạch toàn bộ thùng rác? Không thể hoàn tác!')) return;
   try {
@@ -566,7 +573,7 @@ function toggleExportMenu() {
   const menu = document.getElementById('export-menu');
   menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 }
- 
+
 async function getAllNotes() {
   try {
     const res = await fetch(`${API}/notes?limit=1000`, {
@@ -579,7 +586,7 @@ async function getAllNotes() {
     return [];
   }
 }
- 
+
 async function exportTXT() {
   showToast('Đang xuất file TXT...', 'info');
   const notes = await getAllNotes();
@@ -587,12 +594,12 @@ async function exportTXT() {
     showToast('Không có ghi chú để export!', 'warning');
     return;
   }
- 
+
   let content = `NOTEAPP - DANH SÁCH GHI CHÚ\n`;
   content += `Xuất lúc: ${new Date().toLocaleString('vi-VN')}\n`;
   content += `Tổng số: ${notes.length} ghi chú\n`;
   content += `${'='.repeat(50)}\n\n`;
- 
+
   notes.forEach((note, index) => {
     content += `${index + 1}. ${note.title}\n`;
     content += `${'─'.repeat(40)}\n`;
@@ -604,7 +611,7 @@ async function exportTXT() {
     if (note.isPinned) content += `📌 Đã ghim\n`;
     content += `\n`;
   });
- 
+
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -614,7 +621,7 @@ async function exportTXT() {
   URL.revokeObjectURL(url);
   showToast('Đã xuất file TXT thành công!', 'success');
 }
- 
+
 async function exportPDF() {
   showToast('Đang chuẩn bị in PDF...', 'info');
   const notes = await getAllNotes();
@@ -622,7 +629,7 @@ async function exportPDF() {
     showToast('Không có ghi chú để export!', 'warning');
     return;
   }
- 
+
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -669,13 +676,13 @@ async function exportPDF() {
 }
 // ==================== PWA ====================
 let deferredPrompt;
- 
+
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
   document.getElementById('install-btn').style.display = 'block';
 });
- 
+
 async function installApp() {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
@@ -686,16 +693,15 @@ async function installApp() {
   }
   deferredPrompt = null;
 }
- 
+
 window.addEventListener('appinstalled', () => {
   showToast('NoteApp đã được cài đặt!', 'success');
   document.getElementById('install-btn').style.display = 'none';
 });
- 
 // ==================== REMINDER ====================
 async function initPushNotification() {
   try {
-    const res = await fetch(`${API}/auth/vapid-public-key`);
+    const res = await fetch(`${API_URL}/auth/vapid-public-key`);
     const { publicKey } = await res.json();
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return;
@@ -704,27 +710,27 @@ async function initPushNotification() {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
-    await fetch(`${API}/auth/push-subscription`, {
+    await fetch(`${API_URL}/auth/push-subscription`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ subscription: sub })
     });
     console.log('✅ Push subscription saved');
-  } catch (err) {
+  } catch (err) {A
     console.error('Push init error:', err);
   }
 }
- 
+
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
- 
+
 async function setReminder(noteId, reminderAt) {
   try {
-    const res = await fetch(`${API}/notes/${noteId}/reminder`, {
+    const res = await fetch(`${API_URL}/notes/${noteId}/reminder`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ reminderAt })
@@ -737,29 +743,29 @@ async function setReminder(noteId, reminderAt) {
     showToast('Lỗi đặt nhắc nhở!', 'error');
   }
 }
- 
+
 async function loadReminders() {
   try {
-    const res = await fetch(`${API}/notes/reminders`, {
+    const res = await fetch(`${API_URL}/notes/reminders`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const notes = await res.json();
     const container = document.getElementById('reminders-list');
     if (!container) return;
- 
+
     if (notes.length === 0) {
       container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Chưa có nhắc nhở nào</p>';
       return;
     }
- 
+
     container.innerHTML = notes.map(note => `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-secondary); border-radius:10px; margin-bottom:10px;">
         <div>
           <div style="font-weight:600; margin-bottom:4px;">${note.title}</div>
           <div style="font-size:12px; color:var(--text-secondary);">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}</div>
           <div style="font-size:11px; margin-top:4px;">
-            ${note.reminderSent
-              ? '<span style="color:#22c55e;">✅ Đã gửi</span>'
+            ${note.reminderSent 
+              ? '<span style="color:#22c55e;">✅ Đã gửi</span>' 
               : '<span style="color:#f59e0b;">⏳ Chờ gửi</span>'}
           </div>
         </div>
@@ -770,47 +776,120 @@ async function loadReminders() {
     console.error('Load reminders error:', err);
   }
 }
- 
+
 function showReminders() {
   const modal = document.getElementById('reminder-modal');
   modal.style.display = 'flex';
   loadReminders();
 }
- 
+
 function closeReminders() {
   document.getElementById('reminder-modal').style.display = 'none';
 }
- 
-function showReminderPicker(noteId) {
-  const existing = document.getElementById(`reminder-picker-${noteId}`);
-  if (existing) { existing.remove(); return; }
- 
-  const picker = document.createElement('div');
-  picker.id = `reminder-picker-${noteId}`;
-  picker.style.cssText = 'position:absolute; z-index:100; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.15); margin-top:4px;';
-  picker.innerHTML = `
-    <label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">Chọn thời gian nhắc nhở:</label>
-    <input type="datetime-local" id="dt-${noteId}" style="border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:13px; color:var(--text); background:var(--bg);">
-    <div style="display:flex; gap:6px; margin-top:8px;">
-      <button onclick="confirmReminder('${noteId}')" style="background:#4f46e5; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">✅ Đặt</button>
-      <button onclick="document.getElementById('reminder-picker-${noteId}').remove()" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">✕</button>
-    </div>
-  `;
- 
-  const btn = document.getElementById(`remind-btn-${noteId}`);
-  btn.parentElement.style.position = 'relative';
-  btn.parentElement.appendChild(picker);
+
+// Khởi tạo push notification
+if ('Notification' in window && 'serviceWorker' in navigator) {
+  initPushNotification();
 }
- 
-function confirmReminder(noteId) {
-  const dt = document.getElementById(`dt-${noteId}`).value;
-  if (!dt) { showToast('Vui lòng chọn thời gian!', 'error'); return; }
-  const reminderAt = new Date(dt).toISOString();
-  setReminder(noteId, reminderAt);
-  document.getElementById(`reminder-picker-${noteId}`).remove();
+
+// ==================== PWA ====================
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-btn').style.display = 'block';
+});
+
+async function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+  if (result.outcome === 'accepted') {
+    showToast('Đã cài đặt NoteApp!', 'success');
+    document.getElementById('install-btn').style.display = 'none';
+  }
+  deferredPrompt = null;
 }
- 
+
+window.addEventListener('appinstalled', () => {
+  showToast('NoteApp đã được cài đặt!', 'success');
+  document.getElementById('install-btn').style.display = 'none';
+});
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function setReminder(noteId, reminderAt) {
+  try {
+    const res = await fetch(`${API_URL}/notes/${noteId}/reminder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ reminderAt })
+    });
+    if (res.ok) showToast(reminderAt ? '⏰ Đã đặt nhắc nhở!' : '🗑️ Đã xóa nhắc nhở!', 'success');
+  } catch (err) {
+    showToast('Lỗi đặt nhắc nhở!', 'error');
+  }
+}
+
+async function loadReminders() {
+  try {
+    const res = await fetch(`${API_URL}/notes/reminders`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const notes = await res.json();
+    const container = document.getElementById('reminders-list');
+    if (!container) return;
+    
+    if (notes.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Chưa có nhắc nhở nào</p>';
+      return;
+    }
+    
+    container.innerHTML = notes.map(note => `
+      <div class="reminder-item">
+        <div class="reminder-info">
+          <strong>${note.title}</strong>
+          <span>⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}</span>
+          ${note.reminderSent ? '<span class="badge-sent">✅ Đã gửi</span>' : '<span class="badge-pending">⏳ Chờ gửi</span>'}
+        </div>
+        <button onclick="setReminder('${note._id}', null); loadReminders();" class="btn-delete-reminder">🗑️</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Load reminders error:', err);
+  }
+}
+
 // Khởi tạo push notification khi load app
 if ('Notification' in window && 'serviceWorker' in navigator) {
   initPushNotification();
+}
+// ==================== MARKDOWN PREVIEW ====================
+function toggleMarkdownPreview() {
+  const editor = document.getElementById('note-content');
+  const btn = document.getElementById('preview-btn');
+  let previewDiv = document.getElementById('markdown-preview');
+ 
+  if (!previewDiv) {
+    previewDiv = document.createElement('div');
+    previewDiv.id = 'markdown-preview';
+    previewDiv.style.cssText = 'min-height:150px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);display:none;line-height:1.6;';
+    editor.parentNode.insertBefore(previewDiv, editor.nextSibling);
+  }
+ 
+  if (editor.style.display !== 'none') {
+    previewDiv.innerHTML = marked.parse(editor.innerText || '*Chưa có nội dung*');
+    previewDiv.style.display = 'block';
+    editor.style.display = 'none';
+    btn.textContent = '✏️ Edit';
+  } else {
+    previewDiv.style.display = 'none';
+    editor.style.display = 'block';
+    btn.textContent = '👁️ Preview';
+  }
 }
