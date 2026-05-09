@@ -1,3 +1,4 @@
+﻿const { upload } = require('../cloudinary');
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -11,22 +12,22 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Kiểm tra user đã tồn tại chưa
+    // Kiá»ƒm tra user Ä‘Ă£ tá»“n táº¡i chÆ°a
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email đã được sử dụng' });
+      return res.status(400).json({ message: 'Email Ä‘Ă£ Ä‘Æ°á»£c sá»­ dá»¥ng' });
     }
 
-    // Mã hóa password
+    // MĂ£ hĂ³a password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Tạo user mới
+    // Táº¡o user má»›i
     const user = new User({ username, email, password: hashedPassword });
     await user.save();
 
-    res.status(201).json({ message: 'Đăng ký thành công!' });
+    res.status(201).json({ message: 'ÄÄƒng kĂ½ thĂ nh cĂ´ng!' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
+    res.status(500).json({ message: 'Lá»—i server', error: err.message });
   }
 });
 
@@ -35,19 +36,19 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Tìm user
+    // TĂ¬m user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Email hoặc password không đúng' });
+      return res.status(400).json({ message: 'Email hoáº·c password khĂ´ng Ä‘Ăºng' });
     }
 
-    // Kiểm tra password
+    // Kiá»ƒm tra password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Email hoặc password không đúng' });
+      return res.status(400).json({ message: 'Email hoáº·c password khĂ´ng Ä‘Ăºng' });
     }
 
-    // Tạo JWT token
+    // Táº¡o JWT token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
@@ -59,19 +60,19 @@ router.post('/login', async (req, res) => {
       user: { id: user._id, username: user.username, email: user.email }
     });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
+    res.status(500).json({ message: 'Lá»—i server', error: err.message });
   }
 });
-// PUT /api/auth/update - Cập nhật email/username
+// PUT /api/auth/update - Cáº­p nháº­t email/username
 router.put('/update', auth, async (req, res) => {
   try {
     const { username, email } = req.body;
 
-    // Kiểm tra email đã tồn tại chưa
+    // Kiá»ƒm tra email Ä‘Ă£ tá»“n táº¡i chÆ°a
     if (email) {
       const existing = await User.findOne({ email, _id: { $ne: req.userId } });
       if (existing) {
-        return res.status(400).json({ message: 'Email đã được sử dụng' });
+        return res.status(400).json({ message: 'Email Ä‘Ă£ Ä‘Æ°á»£c sá»­ dá»¥ng' });
       }
     }
 
@@ -81,12 +82,12 @@ router.put('/update', auth, async (req, res) => {
       { new: true }
     ).select('-password');
 
-    res.json({ message: 'Cập nhật thành công!', user });
+    res.json({ message: 'Cáº­p nháº­t thĂ nh cĂ´ng!', user });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
+    res.status(500).json({ message: 'Lá»—i server', error: err.message });
   }
 });
-// PUT /api/auth/change-password - Đổi password
+// PUT /api/auth/change-password - Äá»•i password
 router.put('/change-password', auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -94,18 +95,18 @@ router.put('/change-password', auth, async (req, res) => {
     const user = await User.findById(req.userId);
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Mật khẩu hiện tại không đúng' });
+      return res.status(400).json({ message: 'Máº­t kháº©u hiá»‡n táº¡i khĂ´ng Ä‘Ăºng' });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ message: 'Đổi mật khẩu thành công!' });
+    res.json({ message: 'Äá»•i máº­t kháº©u thĂ nh cĂ´ng!' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
+    res.status(500).json({ message: 'Lá»—i server', error: err.message });
   }
 });
-// PUT /api/auth/avatar - Cập nhật avatar
+// PUT /api/auth/avatar - Cáº­p nháº­t avatar
 router.put('/avatar', auth, async (req, res) => {
   try {
     const { avatar } = req.body;
@@ -114,9 +115,9 @@ router.put('/avatar', auth, async (req, res) => {
       { avatar },
       { new: true }
     ).select('-password');
-    res.json({ message: 'Cập nhật avatar thành công!', user });
+    res.json({ message: 'Cáº­p nháº­t avatar thĂ nh cĂ´ng!', user });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'Lá»—i server' });
   }
 });
 // POST /api/auth/forgot-password
@@ -125,16 +126,16 @@ router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'Email không tồn tại!' });
+      return res.status(404).json({ message: 'Email khĂ´ng tá»“n táº¡i!' });
     }
 
-    // Tạo reset token
+    // Táº¡o reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetToken = resetToken;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 giờ
+    user.resetTokenExpiry = Date.now() + 3600000; // 1 giá»
     await user.save();
 
-    // Gửi email
+    // Gá»­i email
     const nodemailer = require('nodemailer');
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -149,25 +150,25 @@ router.post('/forgot-password', async (req, res) => {
     await transporter.sendMail({
       from: `"NoteApp" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: '🔒 Đặt lại mật khẩu NoteApp',
+      subject: 'đŸ”’ Äáº·t láº¡i máº­t kháº©u NoteApp',
       html: `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
-          <h2 style="color: #4f46e5;">📝 NoteApp</h2>
-          <p>Bạn đã yêu cầu đặt lại mật khẩu.</p>
-          <p>Click vào nút bên dưới để đặt lại mật khẩu:</p>
+          <h2 style="color: #4f46e5;">đŸ“ NoteApp</h2>
+          <p>Báº¡n Ä‘Ă£ yĂªu cáº§u Ä‘áº·t láº¡i máº­t kháº©u.</p>
+          <p>Click vĂ o nĂºt bĂªn dÆ°á»›i Ä‘á»ƒ Ä‘áº·t láº¡i máº­t kháº©u:</p>
           <a href="${resetLink}" 
              style="display:inline-block; padding:12px 24px; background:#4f46e5; color:white; border-radius:8px; text-decoration:none; margin:16px 0;">
-            🔑 Đặt lại mật khẩu
+            đŸ”‘ Äáº·t láº¡i máº­t kháº©u
           </a>
-          <p style="color:#666; font-size:13px;">Link này sẽ hết hạn sau <strong>1 giờ</strong>.</p>
-          <p style="color:#666; font-size:13px;">Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
+          <p style="color:#666; font-size:13px;">Link nĂ y sáº½ háº¿t háº¡n sau <strong>1 giá»</strong>.</p>
+          <p style="color:#666; font-size:13px;">Náº¿u báº¡n khĂ´ng yĂªu cáº§u Ä‘áº·t láº¡i máº­t kháº©u, hĂ£y bá» qua email nĂ y.</p>
         </div>
       `
     });
 
-    res.json({ message: 'Email đặt lại mật khẩu đã được gửi!' });
+    res.json({ message: 'Email Ä‘áº·t láº¡i máº­t kháº©u Ä‘Ă£ Ä‘Æ°á»£c gá»­i!' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
+    res.status(500).json({ message: 'Lá»—i server', error: err.message });
   }
 });
 
@@ -182,7 +183,7 @@ router.post('/reset-password', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn!' });
+      return res.status(400).json({ message: 'Link Ä‘áº·t láº¡i máº­t kháº©u khĂ´ng há»£p lá»‡ hoáº·c Ä‘Ă£ háº¿t háº¡n!' });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -190,36 +191,38 @@ router.post('/reset-password', async (req, res) => {
     user.resetTokenExpiry = null;
     await user.save();
 
-    res.json({ message: 'Đặt lại mật khẩu thành công! Hãy đăng nhập lại.' });
+    res.json({ message: 'Äáº·t láº¡i máº­t kháº©u thĂ nh cĂ´ng! HĂ£y Ä‘Äƒng nháº­p láº¡i.' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server', error: err.message });
+    res.status(500).json({ message: 'Lá»—i server', error: err.message });
   }
 });
-// POST /api/auth/push-subscription - Lưu push subscription
+// POST /api/auth/push-subscription - LÆ°u push subscription
 router.post('/push-subscription', auth, async (req, res) => {
   try {
     const { subscription } = req.body;
     await User.findByIdAndUpdate(req.userId, {
       pushSubscription: JSON.stringify(subscription)
     });
-    res.json({ message: 'Đã lưu push subscription!' });
+    res.json({ message: 'ÄĂ£ lÆ°u push subscription!' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'Lá»—i server' });
   }
 });
 
-// DELETE /api/auth/push-subscription - Xóa push subscription
+// DELETE /api/auth/push-subscription - XĂ³a push subscription
 router.delete('/push-subscription', auth, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.userId, { pushSubscription: null });
-    res.json({ message: 'Đã xóa push subscription!' });
+    res.json({ message: 'ÄĂ£ xĂ³a push subscription!' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'Lá»—i server' });
   }
 });
 
-// GET /api/auth/vapid-public-key - Lấy public key cho frontend
+// GET /api/auth/vapid-public-key - Láº¥y public key cho frontend
 router.get('/vapid-public-key', (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 module.exports = router;
+
+
