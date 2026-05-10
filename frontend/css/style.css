@@ -742,3 +742,27 @@ input:focus, textarea:focus {
 .skeleton-title { height: 20px; width: 70%; margin-bottom: 12px; }
 .skeleton-text { height: 14px; width: 100%; margin-bottom: 8px; }
 .skeleton-text.short { width: 50%; }
+
+/* ==================== RESPONSIVE MOBILE ==================== */
+@media (max-width: 768px) {
+  .notes-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .note-card-actions { flex-wrap: wrap; gap: 4px; }
+  .note-card-actions button { font-size: 11px !important; padding: 3px 6px !important; }
+  .note-form { padding: 12px; }
+  .toolbar { flex-wrap: wrap; gap: 4px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .main-content { padding: 12px !important; }
+  #notes-grid { padding: 0; }
+  .note-card { padding: 12px; }
+  .folder-list div { font-size: 13px !important; padding: 6px 10px !important; }
+  .sidebar { width: 240px !important; }
+  h1, h2 { font-size: 1.3rem; }
+}
+
+@media (max-width: 480px) {
+  .notes-grid { grid-template-columns: 1fr !important; }
+  .note-card-actions { gap: 3px; }
+  .note-card-actions button { font-size: 10px !important; padding: 2px 5px !important; }
+  .toolbar button { padding: 4px 6px; font-size: 12px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
