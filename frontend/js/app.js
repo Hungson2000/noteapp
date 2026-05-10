@@ -119,6 +119,7 @@ function renderNotes(notes) {
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
         <button onclick="showHistory('${id}')" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
+        <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="background:${note.isPrivate ? '#e53e3e' : '#38a169'};color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">${note.isPrivate ? 'Khoa' : 'Khoa'}</button>
         <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
     </div>`;
@@ -687,4 +688,45 @@ function showSkeleton() {
   const grid = document.getElementById('notes-grid');
   if (!grid) return;
   grid.innerHTML = Array(6).fill(0).map(() => '<div class="skeleton-card"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div>').join('');
+}
+
+// ==================== NOTE PRIVACY ====================
+function showPrivacyModal(noteId, isPrivate) {
+  const action = isPrivate ? 'Xoa mat khau' : 'Dat mat khau';
+  const pwd = prompt(isPrivate ? 'Nhap mat khau hien tai de xoa:' : 'Nhap mat khau moi cho note:');
+  if (pwd === null) return;
+  if (!pwd.trim()) { showToast('Mat khau khong duoc trong!', 'warning'); return; }
+  setNotePrivacy(noteId, isPrivate ? null : pwd, isPrivate);
+}
+
+async function setNotePrivacy(noteId, password, isPrivate) {
+  try {
+    const res = await fetch(API + '/notes/' + noteId + '/privacy', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ password: password })
+    });
+    const data = await res.json();
+    if (res.ok) { showToast(data.message, 'success'); loadNotes(activeTag); }
+    else { showToast(data.message || 'Loi!', 'error'); }
+  } catch(e) { showToast('Loi ket noi!', 'error'); }
+}
+
+async function unlockNote(noteId) {
+  const pwd = prompt('Note nay duoc bao ve. Nhap mat khau:');
+  if (pwd === null) return;
+  try {
+    const res = await fetch(API + '/notes/' + noteId + '/unlock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ password: pwd })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('note-title').value = data.note.title;
+      setEditorContent(data.note.content);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('Da mo khoa note!', 'success');
+    } else { showToast('Sai mat khau!', 'error'); }
+  } catch(e) { showToast('Loi ket noi!', 'error'); }
 }
