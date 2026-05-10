@@ -535,3 +535,27 @@ function confirmReminder(noteId) {
 if ('Notification' in window && 'serviceWorker' in navigator) {
   initPushNotification();
 }
+// ==================== IMAGE IN NOTE ====================
+async function uploadImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Ảnh quá lớn! Tối đa 5MB', 'warning'); return; }
+  showToast('Đang upload ảnh...', 'info');
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await fetch(\/notes/upload-image, {
+      method: 'POST',
+      headers: { 'Authorization': Bearer \ },
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok) {
+      const editor = document.getElementById('note-content');
+      editor.focus();
+      document.execCommand('insertHTML', false, <img src="\" style="max-width:100%;border-radius:8px;margin:8px 0;" />);
+      showToast('Đã chèn ảnh!', 'success');
+    } else { showToast('Lỗi upload ảnh!', 'error'); }
+  } catch (err) { showToast('Lỗi kết nối!', 'error'); }
+  event.target.value = '';
+}
