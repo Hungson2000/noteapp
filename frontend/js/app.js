@@ -681,3 +681,9 @@ async function restoreVersion(noteId, index) {
     showToast('Loi khoi phuc!', 'error');
   }
 }
+// ==================== SKELETON ====================
+function showSkeleton() {
+  const grid = document.getElementById('notes-grid');
+  if (!grid) return;
+  grid.innerHTML = Array(6).fill(0).map(() => '<div class="skeleton-card"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div>').join('');
+}
