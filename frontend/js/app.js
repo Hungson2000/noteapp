@@ -41,6 +41,15 @@ function showToast(message, type = 'info', duration = 3000) {
   }, duration);
 }
  
+// ==================== SKELETON ====================
+function showSkeleton() {
+  const grid = document.getElementById('notes-grid');
+  if (!grid) return;
+  grid.innerHTML = Array(6).fill(0).map(() =>
+    '<div class="skeleton-card"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div>'
+  ).join('');
+}
+ 
 // ==================== FOLDER ====================
 async function loadFolders() {
   try {
@@ -69,8 +78,27 @@ function filterByFolder(folder) {
   loadNotes(activeTag, 1);
 }
  
+// ==================== COUNTDOWN ====================
+function getCountdown(reminderAt) {
+  const now = new Date();
+  const remind = new Date(reminderAt);
+  const diff = remind - now;
+  if (diff < 0) return '<span style="color:#e53e3e;font-weight:600;">⚠️ Đã quá hạn!</span>';
+  const hours = Math.floor(diff / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (hours < 1) return `<span style="color:#e53e3e;">⏳ Còn ${mins} phút nữa!</span>`;
+  if (hours < 24) return `<span style="color:#f59e0b;">⏳ Còn ${hours} giờ ${mins} phút nữa</span>`;
+  const days = Math.floor(hours / 24);
+  return `<span style="color:#10b981;">⏳ Còn ${days} ngày nữa</span>`;
+}
+ 
+function getPriorityBadge(priority) {
+  const map = { high: '🔴 Cao', medium: '🟡 Trung bình', low: '🟢 Thấp' };
+  return priority ? `<span style="font-size:11px;margin-bottom:4px;display:block;">${map[priority] || ''}</span>` : '';
+}
+ 
 // ==================== NOTES ====================
-  async function loadNotes(tag = null, page = 1) {
+async function loadNotes(tag = null, page = 1) {
   try {
     currentPage = page;
     showSkeleton();
@@ -101,8 +129,9 @@ function renderNotes(notes) {
     const color = note.color || '#ffffff';
     const tags = note.tags || [];
     const folder = note.folder || 'Chung';
+    const isOverdue = note.reminderAt && new Date(note.reminderAt) < new Date();
     return `
-    <div class="note-card ${note.isPinned ? 'pinned' : ''}" id="note-${id}" style="background:${color}">
+    <div class="note-card ${note.isPinned ? 'pinned' : ''} ${isOverdue ? 'overdue' : ''}" id="note-${id}" style="background:${color};${isOverdue ? 'border:2px solid #e53e3e;' : ''}">
       <div class="note-card-header">
         <h4>${title}</h4>
         <span class="pin-icon ${note.isPinned ? 'active' : ''}" onclick="togglePin('${id}', ${note.isPinned})" title="${note.isPinned ? 'Bỏ ghim' : 'Ghim'}">📌</span>
@@ -110,8 +139,13 @@ function renderNotes(notes) {
       <p>${content}</p>
       ${tags.length ? `<div class="note-tags">${tags.map(t => `<span class="note-tag">#${t}</span>`).join('')}</div>` : ''}
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">📂 ${folder}</div>
+      ${getPriorityBadge(note.priority)}
       <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
-      ${note.reminderAt ? `<div style="font-size:11px;color:#f59e0b;margin-bottom:6px;">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}</div>` : ''}
+      ${note.reminderAt ? `
+        <div style="font-size:11px;margin-bottom:6px;">
+          ⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}
+          <br>${getCountdown(note.reminderAt)}
+        </div>` : ''}
       <div class="note-card-actions">
         <button class="btn-edit" onclick="editNote('${id}', this)">✏️ Sửa</button>
         <button class="btn-delete" onclick="deleteNote('${id}')">🗑️ Xóa</button>
@@ -119,7 +153,7 @@ function renderNotes(notes) {
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
         <button onclick="showHistory('${id}')" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
-        <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="background:${note.isPrivate ? '#e53e3e' : '#38a169'};color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">${note.isPrivate ? 'Khoa' : 'Khoa'}</button>
+        <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="background:${note.isPrivate ? '#e53e3e' : '#38a169'};color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">${note.isPrivate ? '🔒 Khóa' : '🔓 Khóa'}</button>
         <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
     </div>`;
@@ -565,15 +599,15 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
  
-async function setReminder(noteId, reminderAt) {
+async function setReminder(noteId, reminderAt, priority = 'medium') {
   try {
     const res = await fetch(`${API}/notes/${noteId}/reminder`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ reminderAt })
+      body: JSON.stringify({ reminderAt, priority })
     });
-    if (res.ok) { showToast(reminderAt ? 'Da dat nhac nho!' : 'Da xoa nhac nho!', 'success'); loadReminders(); loadNotes(activeTag); }
-  } catch (err) { showToast('Loi dat nhac nho!', 'error'); }
+    if (res.ok) { showToast(reminderAt ? 'Đã đặt nhắc nhở!' : 'Đã xóa nhắc nhở!', 'success'); loadReminders(); loadNotes(activeTag); }
+  } catch (err) { showToast('Lỗi đặt nhắc nhở!', 'error'); }
 }
  
 async function loadReminders() {
@@ -582,13 +616,16 @@ async function loadReminders() {
     const notes = await res.json();
     const container = document.getElementById('reminders-list');
     if (!container) return;
-    if (notes.length === 0) { container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Chua co nhac nho nao</p>'; return; }
+    if (notes.length === 0) { container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Chưa có nhắc nhở nào</p>'; return; }
+    const priorityMap = { high: '🔴 Cao', medium: '🟡 Trung bình', low: '🟢 Thấp' };
     container.innerHTML = notes.map(note => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:10px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:10px;margin-bottom:10px;border-left:4px solid ${note.priority==='high'?'#e53e3e':note.priority==='low'?'#10b981':'#f59e0b'}">
         <div>
           <div style="font-weight:600;margin-bottom:4px;">${note.title}</div>
           <div style="font-size:12px;color:var(--text-secondary);">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}</div>
-          <div style="font-size:11px;margin-top:4px;">${note.reminderSent ? '<span style="color:#22c55e;">Da gui</span>' : '<span style="color:#f59e0b;">Cho gui</span>'}</div>
+          <div style="font-size:11px;margin-top:2px;">${priorityMap[note.priority] || '🟡 Trung bình'}</div>
+          <div style="font-size:11px;margin-top:4px;">${getCountdown(note.reminderAt)}</div>
+          <div style="font-size:11px;margin-top:2px;">${note.reminderSent ? '<span style="color:#22c55e;">Đã gửi</span>' : '<span style="color:#f59e0b;">Chờ gửi</span>'}</div>
         </div>
         <button onclick="setReminder('${note._id}', null)" style="background:#e53e3e;color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;">🗑️</button>
       </div>
@@ -604,12 +641,19 @@ function showReminderPicker(noteId) {
   if (existing) { existing.remove(); return; }
   const picker = document.createElement('div');
   picker.id = 'reminder-picker-' + noteId;
-  picker.style.cssText = 'position:absolute;z-index:100;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:4px;';
-  picker.innerHTML = '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Chon thoi gian nhac nho:</label>' +
-    '<input type="datetime-local" id="dt-' + noteId + '" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text);background:var(--bg);">' +
-    '<div style="display:flex;gap:6px;margin-top:8px;">' +
-    '<button onclick="confirmReminder(\'' + noteId + '\')" style="background:#4f46e5;color:white;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">Dat</button>' +
-    '<button onclick="document.getElementById(\'reminder-picker-' + noteId + '\').remove()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">Huy</button>' +
+  picker.style.cssText = 'position:absolute;z-index:100;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:4px;min-width:220px;';
+  picker.innerHTML =
+    '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">⏰ Thời gian nhắc nhở:</label>' +
+    '<input type="datetime-local" id="dt-' + noteId + '" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text);background:var(--bg);margin-bottom:8px;">' +
+    '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">🎯 Mức độ ưu tiên:</label>' +
+    '<select id="priority-' + noteId + '" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text);background:var(--bg);margin-bottom:8px;">' +
+    '<option value="low">🟢 Thấp</option>' +
+    '<option value="medium" selected>🟡 Trung bình</option>' +
+    '<option value="high">🔴 Cao</option>' +
+    '</select>' +
+    '<div style="display:flex;gap:6px;">' +
+    '<button onclick="confirmReminder(\'' + noteId + '\')" style="flex:1;background:#4f46e5;color:white;border:none;border-radius:6px;padding:6px;cursor:pointer;font-size:12px;">✅ Đặt</button>' +
+    '<button onclick="document.getElementById(\'reminder-picker-' + noteId + '\').remove()" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:6px;cursor:pointer;font-size:12px;">❌ Hủy</button>' +
     '</div>';
   const btn = document.getElementById('remind-btn-' + noteId);
   btn.parentElement.style.position = 'relative';
@@ -618,8 +662,9 @@ function showReminderPicker(noteId) {
  
 function confirmReminder(noteId) {
   const dt = document.getElementById('dt-' + noteId).value;
-  if (!dt) { showToast('Vui long chon thoi gian!', 'error'); return; }
-  setReminder(noteId, new Date(dt).toISOString());
+  if (!dt) { showToast('Vui lòng chọn thời gian!', 'error'); return; }
+  const priority = document.getElementById('priority-' + noteId)?.value || 'medium';
+  setReminder(noteId, new Date(dt).toISOString(), priority);
   document.getElementById('reminder-picker-' + noteId).remove();
 }
  
@@ -641,14 +686,14 @@ async function showHistory(noteId) {
       modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
       modal.innerHTML = '<div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
-        '<h3 style="margin:0;">Lich su chinh sua</h3>' +
-        '<button onclick="document.getElementById(\'history-modal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;">X</button>' +
+        '<h3 style="margin:0;">📜 Lịch sử chỉnh sửa</h3>' +
+        '<button onclick="document.getElementById(\'history-modal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>' +
         '</div><div id="history-list"></div></div>';
       document.body.appendChild(modal);
     }
     const list = document.getElementById('history-list');
     if (!history || history.length === 0) {
-      list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Chua co lich su chinh sua</p>';
+      list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Chưa có lịch sử chỉnh sửa</p>';
     } else {
       list.innerHTML = history.map((v, i) =>
         '<div style="padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">' +
@@ -657,68 +702,57 @@ async function showHistory(noteId) {
         '<span style="font-size:12px;color:var(--text-muted);">' + new Date(v.editedAt).toLocaleString('vi-VN') + '</span>' +
         '</div>' +
         '<p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">' + v.content.substring(0, 100) + (v.content.length > 100 ? '...' : '') + '</p>' +
-        '<button onclick="restoreVersion(\'' + noteId + '\', ' + i + ')" style="padding:4px 12px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">Khoi phuc</button>' +
+        '<button onclick="restoreVersion(\'' + noteId + '\', ' + i + ')" style="padding:4px 12px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">♻️ Khôi phục</button>' +
         '</div>'
       ).join('');
     }
     modal.style.display = 'flex';
-  } catch (err) {
-    showToast('Loi tai lich su!', 'error');
-  }
+  } catch (err) { showToast('Lỗi tải lịch sử!', 'error'); }
 }
  
 async function restoreVersion(noteId, index) {
-  if (!confirm('Khoi phuc version nay? Noi dung hien tai se duoc luu vao lich su.')) return;
+  if (!confirm('Khôi phục version này? Nội dung hiện tại sẽ được lưu vào lịch sử.')) return;
   try {
     const res = await fetch(`${API}/notes/${noteId}/history/${index}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
-      showToast('Da khoi phuc version!', 'success');
+      showToast('Đã khôi phục version!', 'success');
       document.getElementById('history-modal').style.display = 'none';
       loadNotes(activeTag);
     }
-  } catch (err) {
-    showToast('Loi khoi phuc!', 'error');
-  }
+  } catch (err) { showToast('Lỗi khôi phục!', 'error'); }
 }
-// ==================== SKELETON ====================
-function showSkeleton() {
-  const grid = document.getElementById('notes-grid');
-  if (!grid) return;
-  grid.innerHTML = Array(6).fill(0).map(() => '<div class="skeleton-card"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div>').join('');
-}
-
+ 
 // ==================== NOTE PRIVACY ====================
 function showPrivacyModal(noteId, isPrivate) {
-  const action = isPrivate ? 'Xoa mat khau' : 'Dat mat khau';
-  const pwd = prompt(isPrivate ? 'Nhap mat khau hien tai de xoa:' : 'Nhap mat khau moi cho note:');
+  const pwd = prompt(isPrivate ? 'Nhập mật khẩu hiện tại để xóa:' : 'Nhập mật khẩu mới cho note:');
   if (pwd === null) return;
-  if (!pwd.trim()) { showToast('Mat khau khong duoc trong!', 'warning'); return; }
+  if (!pwd.trim()) { showToast('Mật khẩu không được trống!', 'warning'); return; }
   setNotePrivacy(noteId, isPrivate ? null : pwd, isPrivate);
 }
-
+ 
 async function setNotePrivacy(noteId, password, isPrivate) {
   try {
-    const res = await fetch(API + '/notes/' + noteId + '/privacy', {
+    const res = await fetch(`${API}/notes/${noteId}/privacy`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ password: password })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ password })
     });
     const data = await res.json();
     if (res.ok) { showToast(data.message, 'success'); loadNotes(activeTag); }
-    else { showToast(data.message || 'Loi!', 'error'); }
-  } catch(e) { showToast('Loi ket noi!', 'error'); }
+    else { showToast(data.message || 'Lỗi!', 'error'); }
+  } catch(e) { showToast('Lỗi kết nối!', 'error'); }
 }
-
+ 
 async function unlockNote(noteId) {
-  const pwd = prompt('Note nay duoc bao ve. Nhap mat khau:');
+  const pwd = prompt('Note này được bảo vệ. Nhập mật khẩu:');
   if (pwd === null) return;
   try {
-    const res = await fetch(API + '/notes/' + noteId + '/unlock', {
+    const res = await fetch(`${API}/notes/${noteId}/unlock`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ password: pwd })
     });
     const data = await res.json();
@@ -726,10 +760,11 @@ async function unlockNote(noteId) {
       document.getElementById('note-title').value = data.note.title;
       setEditorContent(data.note.content);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      showToast('Da mo khoa note!', 'success');
-    } else { showToast('Sai mat khau!', 'error'); }
-  } catch(e) { showToast('Loi ket noi!', 'error'); }
+      showToast('Đã mở khóa note!', 'success');
+    } else { showToast('Sai mật khẩu!', 'error'); }
+  } catch(e) { showToast('Lỗi kết nối!', 'error'); }
 }
+ 
 // ==================== DASHBOARD ====================
 async function showDashboard() {
   try {

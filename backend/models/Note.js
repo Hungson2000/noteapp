@@ -14,6 +14,7 @@ const noteSchema = new mongoose.Schema({
   reminderAt: { type: Date, default: null },
   reminderSent: { type: Boolean, default: false },
   folder: { type: String, default: 'Chung', trim: true },
+  priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   isPrivate: { type: Boolean, default: false },
   notePassword: { type: String, default: null },
   history: [{
@@ -26,3 +27,4 @@ const noteSchema = new mongoose.Schema({
 noteSchema.index({ title: 'text', content: 'text', tags: 'text' });
 
 module.exports = mongoose.model('Note', noteSchema);
+
