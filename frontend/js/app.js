@@ -675,7 +675,7 @@ let searchTimeout = null;
 async function searchNotes(q) {
   if (!q.trim()) { loadNotes(activeTag, 1); return; }
   try {
-    const res = await fetch(`\/notes/search?q=\`, { headers: { 'Authorization': `Bearer \` } });
+    const res = await fetch(`${API}/notes/search?q=${encodeURIComponent(q)}`, { headers: { 'Authorization': `Bearer ${token}` } });
     const notes = await res.json();
     const grid = document.getElementById('notes-grid');
     if (!notes.length) { grid.innerHTML = '<p class="empty-state">Khong tim thay ket qua</p>'; return; }
