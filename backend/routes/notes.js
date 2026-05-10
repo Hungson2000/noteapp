@@ -91,6 +91,15 @@ router.post('/', auth, async (req, res) => {
 });
  
 // PUT /api/notes/:id - Cập nhật và lưu history
+router.get('/folders', auth, async (req, res) => {
+  try {
+    const folders = await Note.distinct('folder', { user: req.userId, isDeleted: false });
+    res.json(folders);
+  } catch (err) {
+    res.status(500).json({ message: 'Loi server' });
+  }
+});
+
 router.put('/:id', auth, async (req, res) => {
   try {
     const { title, content, tags, color, isPinned } = req.body;
@@ -249,14 +258,6 @@ router.post('/upload-image', auth, upload.single('image'), async (req, res) => {
 });
  
 
-// GET /api/notes/folders - Lay danh sach folder
-router.get('/folders', auth, async (req, res) => {
-  try {
-    const folders = await Note.distinct('folder', { user: req.userId, isDeleted: false });
-    res.json(folders);
-  } catch (err) {
-    res.status(500).json({ message: 'Loi server' });
-  }
-});
 module.exports = router;
+
 
