@@ -77,6 +77,7 @@ function renderNotes(notes) {
         <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${note._id}', ${note.isShared}, '${note.shareId}')">
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
+        <button onclick="showHistory(`'+note._id+`')" title="Lịch sử" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">📜</button>
         <button id="remind-btn-${note._id}" onclick="showReminderPicker('${note._id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
     </div>
@@ -559,3 +560,68 @@ async function uploadImage(event) {
   } catch (err) { showToast('Lỗi kết nối!', 'error'); }
   event.target.value = '';
 }
+Add-Content -Path "C:\Users\sonhu\noteapp\frontend\js\app.js" -Value @"
+
+// ==================== NOTE HISTORY ====================
+async function showHistory(noteId) {
+  try {
+    const res = await fetch(`\${API}/notes/\${noteId}/history`, {
+      headers: { 'Authorization': `Bearer \${token}` }
+    });
+    const history = await res.json();
+    
+    let modal = document.getElementById('history-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'history-modal';
+      modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+      modal.innerHTML = `
+        <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">📜 Lịch sử chỉnh sửa</h3>
+            <button onclick="document.getElementById('history-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+          </div>
+          <div id="history-list"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    const list = document.getElementById('history-list');
+    if (history.length === 0) {
+      list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Chưa có lịch sử chỉnh sửa</p>';
+    } else {
+      list.innerHTML = history.map((v, i) => `
+        <div style="padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong>\${v.title}</strong>
+            <span style="font-size:12px;color:var(--text-muted);">\${new Date(v.editedAt).toLocaleString('vi-VN')}</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">\${v.content.substring(0, 100)}\${v.content.length > 100 ? '...' : ''}</p>
+          <button onclick="restoreVersion('\${noteId}', \${i})" style="padding:4px 12px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">♻️ Khôi phục</button>
+        </div>
+      `).join('');
+    }
+    modal.style.display = 'flex';
+  } catch (err) {
+    showToast('Lỗi tải lịch sử!', 'error');
+  }
+}
+
+async function restoreVersion(noteId, index) {
+  if (!confirm('Khôi phục version này? Nội dung hiện tại sẽ được lưu vào lịch sử.')) return;
+  try {
+    const res = await fetch(`\${API}/notes/\${noteId}/history/\${index}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer \${token}` }
+    });
+    if (res.ok) {
+      showToast('Đã khôi phục version!', 'success');
+      document.getElementById('history-modal').style.display = 'none';
+      loadNotes(activeTag);
+    }
+  } catch (err) {
+    showToast('Lỗi khôi phục!', 'error');
+  }
+}
+"@
