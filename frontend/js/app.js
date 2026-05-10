@@ -83,7 +83,7 @@ function renderNotes(notes) {
         <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
-        <button onclick="showHistory('${id}')" title="Lịch sử" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">📜</button>
+        <button onclick="showHistory('${id}')" title="Lich su" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
         <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
     </div>`;
