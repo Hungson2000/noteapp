@@ -70,9 +70,10 @@ function filterByFolder(folder) {
 }
  
 // ==================== NOTES ====================
-async function loadNotes(tag = null, page = 1) {
+  async function loadNotes(tag = null, page = 1) {
   try {
     currentPage = page;
+    showSkeleton();
     let url = `${API}/notes?page=${page}&limit=${NOTES_PER_PAGE}`;
     if (tag) url += `&tag=${tag}`;
     if (activeFolder) url += `&folder=${encodeURIComponent(activeFolder)}`;

@@ -61,7 +61,38 @@ router.get('/reminders', auth, async (req, res) => {
     res.status(500).json({ message: 'Lỗi server' });
   }
 });
- 
+// PUT /api/notes/:id/privacy - Dat/xoa mat khau note
+router.put('/:id/privacy', auth, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const note = await Note.findOne({ _id: req.params.id, user: req.userId });
+    if (!note) return res.status(404).json({ message: 'Khong tim thay' });
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      note.notePassword = await bcrypt.hash(password, 10);
+      note.isPrivate = true;
+    } else {
+      note.notePassword = null;
+      note.isPrivate = false;
+    }
+    await note.save();
+    res.json({ message: password ? 'Da dat mat khau!' : 'Da xoa mat khau!', isPrivate: note.isPrivate });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});
+
+// POST /api/notes/:id/unlock - Xac thuc mat khau note
+router.post('/:id/unlock', auth, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const note = await Note.findOne({ _id: req.params.id, user: req.userId });
+    if (!note) return res.status(404).json({ message: 'Khong tim thay' });
+    if (!note.isPrivate) return res.json({ success: true, note });
+    const bcrypt = require('bcryptjs');
+    const match = await bcrypt.compare(password, note.notePassword);
+    if (!match) return res.status(401).json({ message: 'Sai mat khau!' });
+    res.json({ success: true, note });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});
 // GET /api/notes/search
 router.get('/search', auth, async (req, res) => {
   try {
