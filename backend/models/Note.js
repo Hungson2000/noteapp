@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
- 
+﻿const mongoose = require('mongoose');
+
 const noteSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   content: { type: String, required: true },
@@ -13,12 +13,12 @@ const noteSchema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
   reminderAt: { type: Date, default: null },
   reminderSent: { type: Boolean, default: false },
+  folder: { type: String, default: 'Chung', trim: true },
   history: [{
     title: String,
     content: String,
     editedAt: { type: Date, default: Date.now }
   }]
 }, { timestamps: true });
- 
+
 module.exports = mongoose.model('Note', noteSchema);
- 

@@ -3,6 +3,7 @@ const token = localStorage.getItem('token');
 let user = JSON.parse(localStorage.getItem('user'));
 let selectedColor = '#ffffff';
 let activeTag = null;
+let activeFolder = null;
 let currentPage = 1;
 const NOTES_PER_PAGE = 6;
 if (!token) window.location.href = 'index.html';
@@ -18,6 +19,7 @@ if (user?.avatar) {
  
 loadNotes();
 loadStats();
+loadFolders();
  
 // ==================== TOAST ====================
 function showToast(message, type = 'info', duration = 3000) {
@@ -39,11 +41,41 @@ function showToast(message, type = 'info', duration = 3000) {
   }, duration);
 }
  
+// ==================== FOLDER ====================
+async function loadFolders() {
+  try {
+    const res = await fetch(`${API}/notes/folders`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const folders = await res.json();
+    const container = document.getElementById('folder-list');
+    if (!container) return;
+    container.innerHTML = `
+      <div onclick="filterByFolder(null)" style="padding:8px 12px;cursor:pointer;border-radius:8px;margin-bottom:4px;font-size:14px;${!activeFolder ? 'background:var(--primary);color:white;' : 'color:var(--text);'}">
+        📁 Tất cả
+      </div>
+      ${folders.map(f => `
+        <div onclick="filterByFolder('${f}')" style="padding:8px 12px;cursor:pointer;border-radius:8px;margin-bottom:4px;font-size:14px;${activeFolder === f ? 'background:var(--primary);color:white;' : 'color:var(--text);'}">
+          📂 ${f}
+        </div>
+      `).join('')}
+    `;
+  } catch (err) { console.error('Load folders error:', err); }
+}
+ 
+function filterByFolder(folder) {
+  activeFolder = folder;
+  loadFolders();
+  loadNotes(activeTag, 1);
+}
+ 
 // ==================== NOTES ====================
 async function loadNotes(tag = null, page = 1) {
   try {
     currentPage = page;
-    const url = `${API}/notes?page=${page}&limit=${NOTES_PER_PAGE}${tag ? `&tag=${tag}` : ''}`;
+    let url = `${API}/notes?page=${page}&limit=${NOTES_PER_PAGE}`;
+    if (tag) url += `&tag=${tag}`;
+    if (activeFolder) url += `&folder=${encodeURIComponent(activeFolder)}`;
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     if (res.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
     const data = await res.json();
@@ -67,6 +99,7 @@ function renderNotes(notes) {
     const content = note.content;
     const color = note.color || '#ffffff';
     const tags = note.tags || [];
+    const folder = note.folder || 'Chung';
     return `
     <div class="note-card ${note.isPinned ? 'pinned' : ''}" id="note-${id}" style="background:${color}">
       <div class="note-card-header">
@@ -75,6 +108,7 @@ function renderNotes(notes) {
       </div>
       <p>${content}</p>
       ${tags.length ? `<div class="note-tags">${tags.map(t => `<span class="note-tag">#${t}</span>`).join('')}</div>` : ''}
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">📂 ${folder}</div>
       <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
       ${note.reminderAt ? `<div style="font-size:11px;color:#f59e0b;margin-bottom:6px;">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}</div>` : ''}
       <div class="note-card-actions">
@@ -83,13 +117,12 @@ function renderNotes(notes) {
         <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
-        <button onclick="showHistory('${id}')" title="Lich su" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
+        <button onclick="showHistory('${id}')" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
         <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
     </div>`;
   }).join('');
  
-  // Lưu data để dùng cho editNote
   window._notesData = notes;
 }
  
@@ -99,6 +132,8 @@ function editNote(id, btn) {
   document.getElementById('note-title').value = note.title;
   setEditorContent(note.content);
   document.getElementById('note-tags').value = (note.tags || []).join(',');
+  const folderInput = document.getElementById('note-folder');
+  if (folderInput) folderInput.value = note.folder || 'Chung';
   selectedColor = note.color || '#ffffff';
   document.querySelectorAll('.color-option').forEach(o => o.classList.toggle('selected', o.dataset.color === selectedColor));
   const submitBtn = document.querySelector('.btn-primary');
@@ -214,19 +249,22 @@ async function createNote() {
   const content = getEditorContent().trim();
   const tagsInput = document.getElementById('note-tags').value.trim();
   const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const folderInput = document.getElementById('note-folder');
+  const folder = folderInput ? (folderInput.value.trim() || 'Chung') : 'Chung';
   if (!title || !content || content === '<br>') { showToast('Vui lòng điền tiêu đề và nội dung!', 'warning'); return; }
   try {
     const res = await fetch(`${API}/notes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ title, content, tags, color: selectedColor })
+      body: JSON.stringify({ title, content, tags, color: selectedColor, folder })
     });
     if (res.ok) {
       document.getElementById('note-title').value = '';
       document.getElementById('note-tags').value = '';
+      if (folderInput) folderInput.value = '';
       clearEditor();
       showToast('Tạo ghi chú thành công!', 'success');
-      loadNotes(activeTag); loadStats();
+      loadNotes(activeTag); loadStats(); loadFolders();
     }
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
 }
@@ -236,21 +274,24 @@ async function updateNote(id) {
   const content = getEditorContent().trim();
   const tagsInput = document.getElementById('note-tags').value.trim();
   const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const folderInput = document.getElementById('note-folder');
+  const folder = folderInput ? (folderInput.value.trim() || 'Chung') : 'Chung';
   try {
     const res = await fetch(`${API}/notes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ title, content, tags, color: selectedColor })
+      body: JSON.stringify({ title, content, tags, color: selectedColor, folder })
     });
     if (res.ok) {
       document.getElementById('note-title').value = '';
       document.getElementById('note-tags').value = '';
+      if (folderInput) folderInput.value = '';
       clearEditor();
       const btn = document.querySelector('.btn-primary');
       btn.textContent = '➕ Thêm ghi chú';
       btn.onclick = createNote;
       showToast('Cập nhật ghi chú thành công!', 'success');
-      loadNotes(activeTag); loadStats();
+      loadNotes(activeTag); loadStats(); loadFolders();
     }
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
 }
@@ -259,7 +300,7 @@ async function deleteNote(id) {
   if (!confirm('Bạn có chắc muốn xóa ghi chú này?')) return;
   try {
     const res = await fetch(`${API}/notes/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-    if (res.ok) { showToast('Xóa ghi chú thành công!', 'success'); loadNotes(activeTag); loadStats(); }
+    if (res.ok) { showToast('Xóa ghi chú thành công!', 'success'); loadNotes(activeTag); loadStats(); loadFolders(); }
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
 }
  
@@ -439,11 +480,11 @@ async function exportTXT() {
   showToast('Đang xuất file TXT...', 'info');
   const notes = await getAllNotes();
   if (notes.length === 0) { showToast('Không có ghi chú để export!', 'warning'); return; }
-  let content = `NOTEAPP - DANH SÁCH GHI CHÚ\nXuất lúc: ${new Date().toLocaleString('vi-VN')}\nTổng số: ${notes.length} ghi chú\n${'='.repeat(50)}\n\n`;
+  let content = `NOTEAPP - DANH SACH GHI CHU\nXuat luc: ${new Date().toLocaleString('vi-VN')}\nTong so: ${notes.length} ghi chu\n${'='.repeat(50)}\n\n`;
   notes.forEach((note, i) => {
     content += `${i + 1}. ${note.title}\n${'─'.repeat(40)}\n${note.content}\n`;
     if (note.tags?.length) content += `Tags: ${note.tags.map(t => '#' + t).join(', ')}\n`;
-    content += `Ngày tạo: ${new Date(note.createdAt).toLocaleDateString('vi-VN')}\n${note.isPinned ? '📌 Đã ghim\n' : ''}\n`;
+    content += `Folder: ${note.folder || 'Chung'}\nNgay tao: ${new Date(note.createdAt).toLocaleDateString('vi-VN')}\n${note.isPinned ? 'Da ghim\n' : ''}\n`;
   });
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -460,8 +501,8 @@ async function exportPDF() {
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>NoteApp - Export PDF</title>
     <style>body{font-family:'Segoe UI',sans-serif;padding:20px;color:#333}h1{color:#4f46e5;text-align:center}.note{padding:16px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;break-inside:avoid}.note-title{font-size:18px;font-weight:bold;margin-bottom:8px}.note-content{font-size:14px;color:#555;line-height:1.6;white-space:pre-wrap}.tag{display:inline-block;padding:2px 8px;background:#4f46e5;color:white;border-radius:10px;font-size:11px;margin-right:4px}.pinned{border-left:4px solid #f6ad55}</style>
-    </head><body><h1>📝 NoteApp</h1><p style="text-align:center;color:#666">Xuất lúc: ${new Date().toLocaleString('vi-VN')} | Tổng: ${notes.length} ghi chú</p>
-    ${notes.map((n,i) => `<div class="note ${n.isPinned?'pinned':''}" style="background:${n.color||'#fff'}"><div class="note-title">${i+1}. ${n.title}${n.isPinned?' 📌':''}</div><div class="note-content">${n.content}</div>${n.tags?.length?`<div style="margin-top:8px">${n.tags.map(t=>`<span class="tag">#${t}</span>`).join('')}</div>`:''}<div style="font-size:11px;color:#999;margin-top:8px">📅 ${new Date(n.createdAt).toLocaleDateString('vi-VN')}</div></div>`).join('')}
+    </head><body><h1>NoteApp</h1><p style="text-align:center;color:#666">Xuat luc: ${new Date().toLocaleString('vi-VN')} | Tong: ${notes.length} ghi chu</p>
+    ${notes.map((n,i) => `<div class="note ${n.isPinned?'pinned':''}" style="background:${n.color||'#fff'}"><div class="note-title">${i+1}. ${n.title}${n.isPinned?' (Da ghim)':''}</div><div class="note-content">${n.content}</div>${n.tags?.length?`<div style="margin-top:8px">${n.tags.map(t=>`<span class="tag">#${t}</span>`).join('')}</div>`:''}<div style="font-size:11px;color:#999;margin-top:8px">Folder: ${n.folder||'Chung'} | ${new Date(n.createdAt).toLocaleDateString('vi-VN')}</div></div>`).join('')}
     </body></html>`);
   printWindow.document.close();
   setTimeout(() => printWindow.print(), 500);
@@ -479,10 +520,10 @@ async function installApp() {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
   const result = await deferredPrompt.userChoice;
-  if (result.outcome === 'accepted') { showToast('Đã cài đặt NoteApp!', 'success'); document.getElementById('install-btn').style.display = 'none'; }
+  if (result.outcome === 'accepted') { showToast('Da cai dat NoteApp!', 'success'); document.getElementById('install-btn').style.display = 'none'; }
   deferredPrompt = null;
 }
-window.addEventListener('appinstalled', () => { showToast('NoteApp đã được cài đặt!', 'success'); document.getElementById('install-btn').style.display = 'none'; });
+window.addEventListener('appinstalled', () => { showToast('NoteApp da duoc cai dat!', 'success'); document.getElementById('install-btn').style.display = 'none'; });
  
 // ==================== REMINDER ====================
 async function initPushNotification() {
@@ -498,7 +539,6 @@ async function initPushNotification() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ subscription: sub })
     });
-    console.log('✅ Push subscription saved');
   } catch (err) { console.error('Push init error:', err); }
 }
  
@@ -516,8 +556,8 @@ async function setReminder(noteId, reminderAt) {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ reminderAt })
     });
-    if (res.ok) { showToast(reminderAt ? '⏰ Đã đặt nhắc nhở!' : '🗑️ Đã xóa nhắc nhở!', 'success'); loadReminders(); loadNotes(activeTag); }
-  } catch (err) { showToast('Lỗi đặt nhắc nhở!', 'error'); }
+    if (res.ok) { showToast(reminderAt ? 'Da dat nhac nho!' : 'Da xoa nhac nho!', 'success'); loadReminders(); loadNotes(activeTag); }
+  } catch (err) { showToast('Loi dat nhac nho!', 'error'); }
 }
  
 async function loadReminders() {
@@ -526,13 +566,13 @@ async function loadReminders() {
     const notes = await res.json();
     const container = document.getElementById('reminders-list');
     if (!container) return;
-    if (notes.length === 0) { container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Chưa có nhắc nhở nào</p>'; return; }
+    if (notes.length === 0) { container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Chua co nhac nho nao</p>'; return; }
     container.innerHTML = notes.map(note => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:10px;margin-bottom:10px;">
         <div>
           <div style="font-weight:600;margin-bottom:4px;">${note.title}</div>
           <div style="font-size:12px;color:var(--text-secondary);">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}</div>
-          <div style="font-size:11px;margin-top:4px;">${note.reminderSent ? '<span style="color:#22c55e;">✅ Đã gửi</span>' : '<span style="color:#f59e0b;">⏳ Chờ gửi</span>'}</div>
+          <div style="font-size:11px;margin-top:4px;">${note.reminderSent ? '<span style="color:#22c55e;">Da gui</span>' : '<span style="color:#f59e0b;">Cho gui</span>'}</div>
         </div>
         <button onclick="setReminder('${note._id}', null)" style="background:#e53e3e;color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;">🗑️</button>
       </div>
@@ -549,11 +589,11 @@ function showReminderPicker(noteId) {
   const picker = document.createElement('div');
   picker.id = 'reminder-picker-' + noteId;
   picker.style.cssText = 'position:absolute;z-index:100;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:4px;';
-  picker.innerHTML = '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Chọn thời gian nhắc nhở:</label>' +
+  picker.innerHTML = '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Chon thoi gian nhac nho:</label>' +
     '<input type="datetime-local" id="dt-' + noteId + '" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text);background:var(--bg);">' +
     '<div style="display:flex;gap:6px;margin-top:8px;">' +
-    '<button onclick="confirmReminder(\'' + noteId + '\')" style="background:#4f46e5;color:white;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">✅ Đặt</button>' +
-    '<button onclick="document.getElementById(\'reminder-picker-' + noteId + '\').remove()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">✕</button>' +
+    '<button onclick="confirmReminder(\'' + noteId + '\')" style="background:#4f46e5;color:white;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">Dat</button>' +
+    '<button onclick="document.getElementById(\'reminder-picker-' + noteId + '\').remove()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">Huy</button>' +
     '</div>';
   const btn = document.getElementById('remind-btn-' + noteId);
   btn.parentElement.style.position = 'relative';
@@ -562,7 +602,7 @@ function showReminderPicker(noteId) {
  
 function confirmReminder(noteId) {
   const dt = document.getElementById('dt-' + noteId).value;
-  if (!dt) { showToast('Vui lòng chọn thời gian!', 'error'); return; }
+  if (!dt) { showToast('Vui long chon thoi gian!', 'error'); return; }
   setReminder(noteId, new Date(dt).toISOString());
   document.getElementById('reminder-picker-' + noteId).remove();
 }
@@ -578,7 +618,6 @@ async function showHistory(noteId) {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const history = await res.json();
- 
     let modal = document.getElementById('history-modal');
     if (!modal) {
       modal = document.createElement('div');
@@ -586,15 +625,14 @@ async function showHistory(noteId) {
       modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
       modal.innerHTML = '<div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
-        '<h3 style="margin:0;">📜 Lịch sử chỉnh sửa</h3>' +
-        '<button onclick="document.getElementById(\'history-modal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>' +
+        '<h3 style="margin:0;">Lich su chinh sua</h3>' +
+        '<button onclick="document.getElementById(\'history-modal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;">X</button>' +
         '</div><div id="history-list"></div></div>';
       document.body.appendChild(modal);
     }
- 
     const list = document.getElementById('history-list');
     if (!history || history.length === 0) {
-      list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Chưa có lịch sử chỉnh sửa</p>';
+      list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Chua co lich su chinh sua</p>';
     } else {
       list.innerHTML = history.map((v, i) =>
         '<div style="padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">' +
@@ -603,29 +641,29 @@ async function showHistory(noteId) {
         '<span style="font-size:12px;color:var(--text-muted);">' + new Date(v.editedAt).toLocaleString('vi-VN') + '</span>' +
         '</div>' +
         '<p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">' + v.content.substring(0, 100) + (v.content.length > 100 ? '...' : '') + '</p>' +
-        '<button onclick="restoreVersion(\'' + noteId + '\', ' + i + ')" style="padding:4px 12px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">♻️ Khôi phục</button>' +
+        '<button onclick="restoreVersion(\'' + noteId + '\', ' + i + ')" style="padding:4px 12px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">Khoi phuc</button>' +
         '</div>'
       ).join('');
     }
     modal.style.display = 'flex';
   } catch (err) {
-    showToast('Lỗi tải lịch sử!', 'error');
+    showToast('Loi tai lich su!', 'error');
   }
 }
  
 async function restoreVersion(noteId, index) {
-  if (!confirm('Khôi phục version này? Nội dung hiện tại sẽ được lưu vào lịch sử.')) return;
+  if (!confirm('Khoi phuc version nay Noi dung hien tai se duoc luu vao lich su.')) return;
   try {
     const res = await fetch(`${API}/notes/${noteId}/history/${index}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
-      showToast('Đã khôi phục version!', 'success');
+      showToast('Da khoi phuc version!', 'success');
       document.getElementById('history-modal').style.display = 'none';
       loadNotes(activeTag);
     }
   } catch (err) {
-    showToast('Lỗi khôi phục!', 'error');
+    showToast('Loi khoi phuc!', 'error');
   }
 }

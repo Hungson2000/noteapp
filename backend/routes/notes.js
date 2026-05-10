@@ -11,6 +11,7 @@ router.get('/', auth, async (req, res) => {
     const { tag, page = 1, limit = 6 } = req.query;
     let query = { user: req.userId, isDeleted: false };
     if (tag) query.tags = tag;
+    if (req.query.folder) query.folder = req.query.folder;
     const total = await Note.countDocuments(query);
     const totalPages = Math.ceil(total / limit);
     const notes = await Note.find(query)
@@ -247,4 +248,15 @@ router.post('/upload-image', auth, upload.single('image'), async (req, res) => {
   }
 });
  
+
+// GET /api/notes/folders - Lay danh sach folder
+router.get('/folders', auth, async (req, res) => {
+  try {
+    const folders = await Note.distinct('folder', { user: req.userId, isDeleted: false });
+    res.json(folders);
+  } catch (err) {
+    res.status(500).json({ message: 'Loi server' });
+  }
+});
 module.exports = router;
+
