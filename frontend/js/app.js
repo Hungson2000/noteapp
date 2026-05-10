@@ -730,3 +730,50 @@ async function unlockNote(noteId) {
     } else { showToast('Sai mat khau!', 'error'); }
   } catch(e) { showToast('Loi ket noi!', 'error'); }
 }
+// ==================== DASHBOARD ====================
+async function showDashboard() {
+  try {
+    const res = await fetch(`${API}/notes/dashboard`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    let modal = document.getElementById('dashboard-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'dashboard-modal';
+      modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+      document.body.appendChild(modal);
+    }
+    const folderRows = Object.entries(data.byFolder).map(([f,c]) =>
+      `<tr><td style="padding:8px;border-bottom:1px solid var(--border)">${f}</td><td style="padding:8px;border-bottom:1px solid var(--border);text-align:center">${c}</td></tr>`
+    ).join('');
+    modal.innerHTML = `
+      <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 style="margin:0;">📊 Dashboard</h3>
+          <button onclick="document.getElementById('dashboard-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+          <div style="background:var(--primary);color:white;padding:16px;border-radius:12px;text-align:center;">
+            <div style="font-size:28px;font-weight:bold;">${data.total}</div>
+            <div style="font-size:12px;margin-top:4px;">Tổng ghi chú</div>
+          </div>
+          <div style="background:#10b981;color:white;padding:16px;border-radius:12px;text-align:center;">
+            <div style="font-size:28px;font-weight:bold;">${data.pinned}</div>
+            <div style="font-size:12px;margin-top:4px;">Đã ghim</div>
+          </div>
+          <div style="background:#e53e3e;color:white;padding:16px;border-radius:12px;text-align:center;">
+            <div style="font-size:28px;font-weight:bold;">${data.private}</div>
+            <div style="font-size:12px;margin-top:4px;">Có mật khẩu</div>
+          </div>
+        </div>
+        <h4 style="margin-bottom:8px;">📂 Theo Folder</h4>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr style="background:var(--bg-secondary);">
+            <th style="padding:8px;text-align:left;">Folder</th>
+            <th style="padding:8px;text-align:center;">Số note</th>
+          </tr>
+          ${folderRows}
+        </table>
+      </div>`;
+    modal.style.display = 'flex';
+  } catch(e) { showToast('Lỗi tải dashboard!', 'error'); }
+}

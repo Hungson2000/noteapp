@@ -1,4 +1,20 @@
-﻿const { upload } = require('../cloudinary');
+﻿// GET /api/notes/dashboard
+router.get('/dashboard', auth, async (req, res) => {
+  try {
+    const notes = await Note.find({ user: req.userId, isDeleted: false });
+    const byFolder = {};
+    const byDate = {};
+    notes.forEach(n => {
+      const f = n.folder || 'Chung';
+      byFolder[f] = (byFolder[f] || 0) + 1;
+      const d = new Date(n.createdAt).toLocaleDateString('vi-VN');
+      byDate[d] = (byDate[d] || 0) + 1;
+    });
+    res.json({ total: notes.length, byFolder, byDate, pinned: notes.filter(n => n.isPinned).length, shared: notes.filter(n => n.isShared).length, private: notes.filter(n => n.isPrivate).length });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});
+
+const { upload } = require('../cloudinary');
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
@@ -296,6 +312,7 @@ router.post('/upload-image', auth, upload.single('image'), async (req, res) => {
  
 
 module.exports = router;
+
 
 
 
