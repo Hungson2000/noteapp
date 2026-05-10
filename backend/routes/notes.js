@@ -1,24 +1,4 @@
-﻿// GET /api/notes/search
-router.get('/search', auth, async (req, res) => {
-  try {
-    const q = req.query.q || '';
-    if (!q.trim()) return res.json([]);
-    const notes = await Note.find({
-      user: req.userId,
-      isDeleted: false,
-      $or: [
-        { title: { $regex: q, $options: 'i' } },
-        { content: { $regex: q, $options: 'i' } },
-        { tags: { $regex: q, $options: 'i' } }
-      ]
-    }).limit(10);
-    res.json(notes);
-  } catch (err) {
-    res.status(500).json({ message: 'Loi server' });
-  }
-});
-
-const { upload } = require('../cloudinary');
+﻿const { upload } = require('../cloudinary');
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
@@ -82,15 +62,21 @@ router.get('/reminders', auth, async (req, res) => {
   }
 });
  
-// GET /api/notes/share/:shareId
-router.get('/share/:shareId', async (req, res) => {
+// GET /api/notes/search
+router.get('/search', auth, async (req, res) => {
   try {
-    const note = await Note.findOne({ shareId: req.params.shareId, isShared: true, isDeleted: false });
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy ghi chú' });
-    res.json(note);
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
-  }
+    const q = req.query.q || '';
+    if (!q.trim()) return res.json([]);
+    const notes = await Note.find({
+      user: req.userId,
+      isDeleted: false,
+      $or: [
+        { title: { $regex: q, $options: 'i' } },
+        { content: { $regex: q, $options: 'i' } }
+      ]
+    }).limit(10);
+    res.json(notes);
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
 });
  
 // POST /api/notes
@@ -279,6 +265,8 @@ router.post('/upload-image', auth, upload.single('image'), async (req, res) => {
  
 
 module.exports = router;
+
+
 
 
 
