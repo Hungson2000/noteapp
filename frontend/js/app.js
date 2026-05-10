@@ -122,7 +122,6 @@ function renderNotes(notes) {
       </div>
     </div>`;
   }).join('');
- 
   window._notesData = notes;
 }
  
@@ -334,13 +333,28 @@ function closeShareModal() { document.getElementById('share-modal').style.displa
 function copyShareLink() { navigator.clipboard.writeText(document.getElementById('share-link-input').value); showToast('Đã copy link chia sẻ!', 'success'); }
  
 // ==================== SEARCH ====================
-function searchNotes() {
-  const keyword = document.getElementById('search-input').value.toLowerCase();
-  document.querySelectorAll('.note-card').forEach(card => {
-    const title = card.querySelector('h4').textContent.toLowerCase();
-    const content = card.querySelector('p').textContent.toLowerCase();
-    card.style.display = title.includes(keyword) || content.includes(keyword) ? 'block' : 'none';
-  });
+let searchTimeout = null;
+async function searchNotes(q) {
+  if (!q.trim()) { loadNotes(activeTag, 1); return; }
+  try {
+    const res = await fetch(`${API}/notes/search?q=${encodeURIComponent(q)}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const notes = await res.json();
+    const grid = document.getElementById('notes-grid');
+    if (!notes.length) { grid.innerHTML = '<p class="empty-state">🔍 Không tìm thấy kết quả</p>'; return; }
+    grid.innerHTML = notes.map(note => `
+      <div class="note-card" id="note-${note._id}" style="background:${note.color || '#fff'}">
+        <div class="note-card-header"><h4>${note.title}</h4></div>
+        <p>${note.content}</p>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">📂 ${note.folder || 'Chung'}</div>
+        <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
+        <div class="note-card-actions">
+          <button class="btn-edit" onclick="editNote('${note._id}', this)">✏️ Sửa</button>
+          <button class="btn-delete" onclick="deleteNote('${note._id}')">🗑️ Xóa</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
 }
  
 // ==================== UI ====================
@@ -667,23 +681,3 @@ async function restoreVersion(noteId, index) {
     showToast('Loi khoi phuc!', 'error');
   }
 }
-
-
-
-// ==================== SEARCH ====================
-let searchTimeout = null;
-async function searchNotes(q) {
-  if (!q.trim()) { loadNotes(activeTag, 1); return; }
-  try {
-    const res = await fetch(`${API}/notes/search?q=${encodeURIComponent(q)}`, { headers: { 'Authorization': `Bearer ${token}` } });
-    const notes = await res.json();
-    const grid = document.getElementById('notes-grid');
-    if (!notes.length) { grid.innerHTML = '<p class="empty-state">Khong tim thay ket qua</p>'; return; }
-    grid.innerHTML = notes.map(note => {
-      const id = note._id;
-      return `<div class="note-card" id="note-\" style="background:\"><div class="note-card-header"><h4>\</h4></div><p>\</p><p class="note-date">\</p><div class="note-card-actions"><button class="btn-edit" onclick="editNote('\',this)">Sua</button><button class="btn-delete" onclick="deleteNote('\')">Xoa</button></div></div>`;
-    }).join('');
-  } catch(e) { console.error(e); }
-}
-
-
