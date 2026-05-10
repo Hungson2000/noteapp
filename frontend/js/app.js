@@ -61,27 +61,50 @@ function renderNotes(notes) {
     grid.innerHTML = '<p class="empty-state">🔭 Chưa có ghi chú nào!</p>';
     return;
   }
-  grid.innerHTML = notes.map(note => `
-    <div class="note-card ${note.isPinned ? 'pinned' : ''}" id="note-${note._id}" style="background:${note.color || '#ffffff'}">
+  grid.innerHTML = notes.map(note => {
+    const id = note._id;
+    const title = note.title;
+    const content = note.content;
+    const color = note.color || '#ffffff';
+    const tags = note.tags || [];
+    return `
+    <div class="note-card ${note.isPinned ? 'pinned' : ''}" id="note-${id}" style="background:${color}">
       <div class="note-card-header">
-        <h4>${note.title}</h4>
-        <span class="pin-icon ${note.isPinned ? 'active' : ''}" onclick="togglePin('${note._id}', ${note.isPinned})" title="${note.isPinned ? 'Bỏ ghim' : 'Ghim'}">📌</span>
+        <h4>${title}</h4>
+        <span class="pin-icon ${note.isPinned ? 'active' : ''}" onclick="togglePin('${id}', ${note.isPinned})" title="${note.isPinned ? 'Bỏ ghim' : 'Ghim'}">📌</span>
       </div>
-      <p>${note.content}</p>
-      ${note.tags?.length ? `<div class="note-tags">${note.tags.map(t => `<span class="note-tag">#${t}</span>`).join('')}</div>` : ''}
+      <p>${content}</p>
+      ${tags.length ? `<div class="note-tags">${tags.map(t => `<span class="note-tag">#${t}</span>`).join('')}</div>` : ''}
       <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
       ${note.reminderAt ? `<div style="font-size:11px;color:#f59e0b;margin-bottom:6px;">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}</div>` : ''}
       <div class="note-card-actions">
-        <button class="btn-edit" onclick="editNote('${note._id}', \`${note.title}\`, \`${note.content}\`, '${note.color}', '${note.tags?.join(',')}')">✏️ Sửa</button>
-        <button class="btn-delete" onclick="deleteNote('${note._id}')">🗑️ Xóa</button>
-        <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${note._id}', ${note.isShared}, '${note.shareId}')">
+        <button class="btn-edit" onclick="editNote('${id}', this)">✏️ Sửa</button>
+        <button class="btn-delete" onclick="deleteNote('${id}')">🗑️ Xóa</button>
+        <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
-        <button onclick="showHistory(`'+note._id+`')" title="Lịch sử" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">📜</button>
-        <button id="remind-btn-${note._id}" onclick="showReminderPicker('${note._id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
+        <button onclick="showHistory('${id}')" title="Lịch sử" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">📜</button>
+        <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+ 
+  // Lưu data để dùng cho editNote
+  window._notesData = notes;
+}
+ 
+function editNote(id, btn) {
+  const note = window._notesData.find(n => n._id === id);
+  if (!note) return;
+  document.getElementById('note-title').value = note.title;
+  setEditorContent(note.content);
+  document.getElementById('note-tags').value = (note.tags || []).join(',');
+  selectedColor = note.color || '#ffffff';
+  document.querySelectorAll('.color-option').forEach(o => o.classList.toggle('selected', o.dataset.color === selectedColor));
+  const submitBtn = document.querySelector('.btn-primary');
+  submitBtn.textContent = '💾 Cập nhật';
+  submitBtn.onclick = () => updateNote(id);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
  
 function renderTagsFilter(notes) {
@@ -160,6 +183,31 @@ function toggleMarkdownPreview() {
   }
 }
  
+// ==================== IMAGE IN NOTE ====================
+async function uploadImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Ảnh quá lớn! Tối đa 5MB', 'warning'); return; }
+  showToast('Đang upload ảnh...', 'info');
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await fetch(`${API}/notes/upload-image`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok) {
+      const editor = document.getElementById('note-content');
+      editor.focus();
+      document.execCommand('insertHTML', false, `<img src="${data.url}" style="max-width:100%;border-radius:8px;margin:8px 0;" />`);
+      showToast('Đã chèn ảnh!', 'success');
+    } else { showToast('Lỗi upload ảnh!', 'error'); }
+  } catch (err) { showToast('Lỗi kết nối!', 'error'); }
+  event.target.value = '';
+}
+ 
 // ==================== CRUD NOTES ====================
 async function createNote() {
   const title = document.getElementById('note-title').value.trim();
@@ -181,18 +229,6 @@ async function createNote() {
       loadNotes(activeTag); loadStats();
     }
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
-}
- 
-function editNote(id, title, content, color, tags) {
-  document.getElementById('note-title').value = title;
-  setEditorContent(content);
-  document.getElementById('note-tags').value = tags || '';
-  selectedColor = color || '#ffffff';
-  document.querySelectorAll('.color-option').forEach(o => o.classList.toggle('selected', o.dataset.color === selectedColor));
-  const btn = document.querySelector('.btn-primary');
-  btn.textContent = '💾 Cập nhật';
-  btn.onclick = () => updateNote(id);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
  
 async function updateNote(id) {
@@ -508,112 +544,81 @@ function showReminders() { document.getElementById('reminder-modal').style.displ
 function closeReminders() { document.getElementById('reminder-modal').style.display = 'none'; }
  
 function showReminderPicker(noteId) {
-  const existing = document.getElementById(`reminder-picker-${noteId}`);
+  const existing = document.getElementById('reminder-picker-' + noteId);
   if (existing) { existing.remove(); return; }
   const picker = document.createElement('div');
-  picker.id = `reminder-picker-${noteId}`;
+  picker.id = 'reminder-picker-' + noteId;
   picker.style.cssText = 'position:absolute;z-index:100;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:4px;';
-  picker.innerHTML = `
-    <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Chọn thời gian nhắc nhở:</label>
-    <input type="datetime-local" id="dt-${noteId}" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text);background:var(--bg);">
-    <div style="display:flex;gap:6px;margin-top:8px;">
-      <button onclick="confirmReminder('${noteId}')" style="background:#4f46e5;color:white;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">✅ Đặt</button>
-      <button onclick="document.getElementById('reminder-picker-${noteId}').remove()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">✕</button>
-    </div>
-  `;
-  const btn = document.getElementById(`remind-btn-${noteId}`);
+  picker.innerHTML = '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Chọn thời gian nhắc nhở:</label>' +
+    '<input type="datetime-local" id="dt-' + noteId + '" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text);background:var(--bg);">' +
+    '<div style="display:flex;gap:6px;margin-top:8px;">' +
+    '<button onclick="confirmReminder(\'' + noteId + '\')" style="background:#4f46e5;color:white;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">✅ Đặt</button>' +
+    '<button onclick="document.getElementById(\'reminder-picker-' + noteId + '\').remove()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">✕</button>' +
+    '</div>';
+  const btn = document.getElementById('remind-btn-' + noteId);
   btn.parentElement.style.position = 'relative';
   btn.parentElement.appendChild(picker);
 }
  
 function confirmReminder(noteId) {
-  const dt = document.getElementById(`dt-${noteId}`).value;
+  const dt = document.getElementById('dt-' + noteId).value;
   if (!dt) { showToast('Vui lòng chọn thời gian!', 'error'); return; }
   setReminder(noteId, new Date(dt).toISOString());
-  document.getElementById(`reminder-picker-${noteId}`).remove();
+  document.getElementById('reminder-picker-' + noteId).remove();
 }
  
 if ('Notification' in window && 'serviceWorker' in navigator) {
   initPushNotification();
 }
-// ==================== IMAGE IN NOTE ====================
-async function uploadImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { showToast('Ảnh quá lớn! Tối đa 5MB', 'warning'); return; }
-  showToast('Đang upload ảnh...', 'info');
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-    const res = await fetch(\/notes/upload-image, {
-      method: 'POST',
-      headers: { 'Authorization': Bearer \ },
-      body: formData
-    });
-    const data = await res.json();
-    if (res.ok) {
-      const editor = document.getElementById('note-content');
-      editor.focus();
-      document.execCommand('insertHTML', false, <img src="\" style="max-width:100%;border-radius:8px;margin:8px 0;" />);
-      showToast('Đã chèn ảnh!', 'success');
-    } else { showToast('Lỗi upload ảnh!', 'error'); }
-  } catch (err) { showToast('Lỗi kết nối!', 'error'); }
-  event.target.value = '';
-}
-Add-Content -Path "C:\Users\sonhu\noteapp\frontend\js\app.js" -Value @"
-
+ 
 // ==================== NOTE HISTORY ====================
 async function showHistory(noteId) {
   try {
-    const res = await fetch(`\${API}/notes/\${noteId}/history`, {
-      headers: { 'Authorization': `Bearer \${token}` }
+    const res = await fetch(`${API}/notes/${noteId}/history`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     const history = await res.json();
-    
+ 
     let modal = document.getElementById('history-modal');
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'history-modal';
       modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
-      modal.innerHTML = `
-        <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h3 style="margin:0;">📜 Lịch sử chỉnh sửa</h3>
-            <button onclick="document.getElementById('history-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
-          </div>
-          <div id="history-list"></div>
-        </div>
-      `;
+      modal.innerHTML = '<div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+        '<h3 style="margin:0;">📜 Lịch sử chỉnh sửa</h3>' +
+        '<button onclick="document.getElementById(\'history-modal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>' +
+        '</div><div id="history-list"></div></div>';
       document.body.appendChild(modal);
     }
-
+ 
     const list = document.getElementById('history-list');
-    if (history.length === 0) {
+    if (!history || history.length === 0) {
       list.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Chưa có lịch sử chỉnh sửa</p>';
     } else {
-      list.innerHTML = history.map((v, i) => `
-        <div style="padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <strong>\${v.title}</strong>
-            <span style="font-size:12px;color:var(--text-muted);">\${new Date(v.editedAt).toLocaleString('vi-VN')}</span>
-          </div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">\${v.content.substring(0, 100)}\${v.content.length > 100 ? '...' : ''}</p>
-          <button onclick="restoreVersion('\${noteId}', \${i})" style="padding:4px 12px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">♻️ Khôi phục</button>
-        </div>
-      `).join('');
+      list.innerHTML = history.map((v, i) =>
+        '<div style="padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+        '<strong>' + v.title + '</strong>' +
+        '<span style="font-size:12px;color:var(--text-muted);">' + new Date(v.editedAt).toLocaleString('vi-VN') + '</span>' +
+        '</div>' +
+        '<p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">' + v.content.substring(0, 100) + (v.content.length > 100 ? '...' : '') + '</p>' +
+        '<button onclick="restoreVersion(\'' + noteId + '\', ' + i + ')" style="padding:4px 12px;background:#4f46e5;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">♻️ Khôi phục</button>' +
+        '</div>'
+      ).join('');
     }
     modal.style.display = 'flex';
   } catch (err) {
     showToast('Lỗi tải lịch sử!', 'error');
   }
 }
-
+ 
 async function restoreVersion(noteId, index) {
   if (!confirm('Khôi phục version này? Nội dung hiện tại sẽ được lưu vào lịch sử.')) return;
   try {
-    const res = await fetch(`\${API}/notes/\${noteId}/history/\${index}`, {
+    const res = await fetch(`${API}/notes/${noteId}/history/${index}`, {
       method: 'PUT',
-      headers: { 'Authorization': `Bearer \${token}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
       showToast('Đã khôi phục version!', 'success');
@@ -624,4 +629,3 @@ async function restoreVersion(noteId, index) {
     showToast('Lỗi khôi phục!', 'error');
   }
 }
-"@
