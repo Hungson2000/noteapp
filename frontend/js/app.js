@@ -670,3 +670,20 @@ async function restoreVersion(noteId, index) {
 
 
 
+// ==================== SEARCH ====================
+let searchTimeout = null;
+async function searchNotes(q) {
+  if (!q.trim()) { loadNotes(activeTag, 1); return; }
+  try {
+    const res = await fetch(`\/notes/search?q=\`, { headers: { 'Authorization': `Bearer \` } });
+    const notes = await res.json();
+    const grid = document.getElementById('notes-grid');
+    if (!notes.length) { grid.innerHTML = '<p class="empty-state">Khong tim thay ket qua</p>'; return; }
+    grid.innerHTML = notes.map(note => {
+      const id = note._id;
+      return `<div class="note-card" id="note-\" style="background:\"><div class="note-card-header"><h4>\</h4></div><p>\</p><p class="note-date">\</p><div class="note-card-actions"><button class="btn-edit" onclick="editNote('\',this)">Sua</button><button class="btn-delete" onclick="deleteNote('\')">Xoa</button></div></div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+

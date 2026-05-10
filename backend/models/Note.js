@@ -20,5 +20,7 @@ const noteSchema = new mongoose.Schema({
     editedAt: { type: Date, default: Date.now }
   }]
 }, { timestamps: true });
+noteSchema.index({ title: 'text', content: 'text', tags: 'text' });
 
 module.exports = mongoose.model('Note', noteSchema);
+
