@@ -652,7 +652,7 @@ async function showHistory(noteId) {
 }
  
 async function restoreVersion(noteId, index) {
-  if (!confirm('Khoi phuc version nay Noi dung hien tai se duoc luu vao lich su.')) return;
+  if (!confirm('Khoi phuc version nay? Noi dung hien tai se duoc luu vao lich su.')) return;
   try {
     const res = await fetch(`${API}/notes/${noteId}/history/${index}`, {
       method: 'PUT',
