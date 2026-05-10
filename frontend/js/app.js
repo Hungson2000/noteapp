@@ -146,15 +146,18 @@ function renderNotes(notes) {
           ⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}
           <br>${getCountdown(note.reminderAt)}
         </div>` : ''}
-      <div class="note-card-actions">
+     <div class="note-card-actions">
         <button class="btn-edit" onclick="editNote('${id}', this)">✏️ Sửa</button>
         <button class="btn-delete" onclick="deleteNote('${id}')">🗑️ Xóa</button>
-        <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">
-          ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
-        </button>
-        <button onclick="showHistory('${id}')" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
-        <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="background:${note.isPrivate ? '#e53e3e' : '#38a169'};color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">${note.isPrivate ? '🔒 Khóa' : '🔓 Khóa'}</button>
-        <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
+        <div style="position:relative;display:inline-block;">
+          <button onclick="toggleMenu('menu-${id}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">···</button>
+          <div id="menu-${id}" style="display:none;position:absolute;right:0;bottom:36px;background:var(--bg);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:50;min-width:150px;padding:4px;">
+            <div onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}</div>
+            <div onclick="showHistory('${id}')" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">📜 Lịch sử</div>
+            <div onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">${note.isPrivate ? '🔒 Mở khóa' : '🔓 Đặt khóa'}</div>
+            <div id="remind-btn-${id}" onclick="showReminderPicker('${id}')" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">⏰ Nhắc nhở</div>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -812,3 +815,15 @@ async function showDashboard() {
     modal.style.display = 'flex';
   } catch(e) { showToast('Lỗi tải dashboard!', 'error'); }
 }
+function toggleMenu(id) {
+  document.querySelectorAll('[id^="menu-"]').forEach(m => {
+    if (m.id !== id) m.style.display = 'none';
+  });
+  const menu = document.getElementById(id);
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('[id^="menu-"]') && !e.target.closest('button[onclick^="toggleMenu"]')) {
+    document.querySelectorAll('[id^="menu-"]').forEach(m => m.style.display = 'none');
+  }
+});
