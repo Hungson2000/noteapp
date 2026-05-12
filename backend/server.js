@@ -1,6 +1,4 @@
-﻿const rateLimit = require('express-rate-limit');
-const loginLimiter = rateLimit({ windowMs: 15*60*1000, max: 20, message: { message: 'Qua nhieu lan thu. Vui long thu lai sau 15 phut!' } });
-const apiLimiter = rateLimit({ windowMs: 1*60*1000, max: 100 });
+﻿
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -36,7 +34,7 @@ const generalLimiter = rateLimit({
 // Rate limiting cho auth - nghiĂªm ngáº·t hÆ¡n
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phĂºt
-  max: 10,
+  max: 50,
   message: { message: 'QuĂ¡ nhiá»u láº§n Ä‘Äƒng nháº­p, vui lĂ²ng thá»­ láº¡i sau 15 phĂºt!' }
 });
 
@@ -66,5 +64,6 @@ mongoose.connect(process.env.MONGO_URI)
     });
   })
   .catch((err) => console.error('âŒ MongoDB connection error:', err));
+
 
 
