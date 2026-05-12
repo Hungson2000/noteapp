@@ -923,3 +923,57 @@ function showNotesForDate(dateStr) {
       <p style="font-size:13px;color:var(--text-muted);margin:4px 0;">${n.content.substring(0,80)}${n.content.length>80?'...':''}</p>
     </div>`).join('')}`;
 }
+// ==================== THEMES ====================
+const themes = [
+  { id: 'purple', name: 'Tím', color: '#6366f1' },
+  { id: 'blue', name: 'Xanh dương', color: '#2563eb' },
+  { id: 'green', name: 'Xanh lá', color: '#16a34a' },
+  { id: 'orange', name: 'Cam', color: '#ea580c' },
+  { id: 'pink', name: 'Hồng', color: '#db2777' },
+];
+
+function showThemes() {
+  let modal = document.getElementById('theme-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'theme-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+    document.body.appendChild(modal);
+  }
+  const currentTheme = localStorage.getItem('appTheme') || 'purple';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:400px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">🎨 Chọn Theme</h3>
+        <button onclick="document.getElementById('theme-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        ${themes.map(t => `
+          <div onclick="applyTheme('${t.id}')" style="cursor:pointer;text-align:center;padding:16px;border-radius:12px;border:3px solid ${currentTheme===t.id?t.color:'var(--border)'};transition:all 0.2s;">
+            <div style="width:40px;height:40px;border-radius:50%;background:${t.color};margin:0 auto 8px;"></div>
+            <div style="font-size:13px;font-weight:${currentTheme===t.id?'bold':'normal'}">${t.name}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+function applyTheme(themeId) {
+  localStorage.setItem('appTheme', themeId);
+  if (themeId === 'purple') {
+    document.documentElement.removeAttribute('data-theme');
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  } else {
+    document.documentElement.setAttribute('data-theme', themeId);
+  }
+  document.getElementById('theme-modal').style.display = 'none';
+  showToast('Đã đổi theme!', 'success');
+}
+
+// Apply saved theme on load
+const savedTheme = localStorage.getItem('appTheme');
+if (savedTheme && savedTheme !== 'purple') {
+  document.documentElement.setAttribute('data-theme', savedTheme);
+}

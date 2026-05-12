@@ -766,3 +766,31 @@ input:focus, textarea:focus {
   .toolbar button { padding: 4px 6px; font-size: 12px; }
   .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
+
+/* ==================== THEMES ==================== */
+[data-theme="blue"] {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #dbeafe;
+}
+[data-theme="green"] {
+  --primary: #16a34a;
+  --primary-hover: #15803d;
+  --primary-light: #dcfce7;
+}
+[data-theme="orange"] {
+  --primary: #ea580c;
+  --primary-hover: #c2410c;
+  --primary-light: #ffedd5;
+}
+[data-theme="pink"] {
+  --primary: #db2777;
+  --primary-hover: #be185d;
+  --primary-light: #fce7f3;
+}
+[data-theme="dark"][data-color="black"] {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --bg: #000000;
+  --card-bg: #111111;
+}
