@@ -202,3 +202,37 @@ router.get('/vapid-public-key', (req, res) => {
 });
  
 module.exports = router;
+// GET /api/auth/notifications
+router.get('/notifications', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('notifications');
+    res.json(user.notifications.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});
+
+// PUT /api/auth/notifications/read-all
+router.put('/notifications/read-all', auth, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.userId, { $set: { 'notifications.$[].read': true } });
+    res.json({ message: 'Da doc tat ca!' });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});
+
+// DELETE /api/auth/notifications/:id
+router.delete('/notifications/:id', auth, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.userId, { $pull: { notifications: { _id: req.params.id } } });
+    res.json({ message: 'Da xoa!' });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});
+
+// POST /api/auth/notifications
+router.post('/notifications', auth, async (req, res) => {
+  try {
+    const { message, type } = req.body;
+    await User.findByIdAndUpdate(req.userId, {
+      $push: { notifications: { message, type: type || 'info', read: false, createdAt: new Date() } }
+    });
+    res.json({ message: 'Da them thong bao!' });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});

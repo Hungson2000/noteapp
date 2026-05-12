@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -33,7 +33,13 @@ resetTokenExpiry: {
   pushSubscription: {
     type: String,
     default: null
-  }
+  },
+  notifications: [{
+    message: { type: String },
+    type: { type: String, default: 'info' },
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

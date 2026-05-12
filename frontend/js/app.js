@@ -1103,3 +1103,97 @@ async function showActivityChart() {
     });
   }, 100);
 }
+
+// ==================== NOTIFICATION CENTER ====================
+async function loadNotificationCount() {
+  try {
+    const res = await fetch(`${API}/auth/notifications`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const notifs = await res.json();
+    const unread = notifs.filter(n => !n.read).length;
+    const bell = document.getElementById('notif-bell');
+    if (bell) {
+      bell.innerHTML = `🔔 ${unread > 0 ? `<span style="background:#e53e3e;color:white;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:4px;">${unread}</span>` : ''}`;
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function showNotifications() {
+  try {
+    const res = await fetch(`${API}/auth/notifications`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const notifs = await res.json();
+
+    let modal = document.getElementById('notif-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'notif-modal';
+      modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+      document.body.appendChild(modal);
+    }
+
+    const icons = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌', reminder: '⏰' };
+
+    modal.innerHTML = `
+      <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="margin:0;">🔔 Thông báo</h3>
+          <div style="display:flex;gap:8px;">
+            <button onclick="markAllRead()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12px;">✅ Đọc tất cả</button>
+            <button onclick="document.getElementById('notif-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+          </div>
+        </div>
+        ${notifs.length === 0 ? '<p style="text-align:center;color:var(--text-muted);padding:20px;">Chưa có thông báo nào</p>' :
+          notifs.map(n => `
+            <div style="display:flex;gap:12px;padding:12px;border-radius:10px;margin-bottom:8px;background:${n.read ? 'var(--bg)' : 'var(--primary-light, #ede9fe)'};border:1px solid var(--border);">
+              <div style="font-size:20px;">${icons[n.type] || 'ℹ️'}</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;color:var(--text);${n.read ? '' : 'font-weight:600;'}">${n.message}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${new Date(n.createdAt).toLocaleString('vi-VN')}</div>
+              </div>
+              <button onclick="deleteNotif('${n._id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;">🗑️</button>
+            </div>`).join('')}
+        <div style="margin-top:12px;text-align:center;">
+          <button onclick="addTestNotif()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:6px 16px;cursor:pointer;font-size:12px;">+ Test thông báo</button>
+        </div>
+      </div>`;
+
+    modal.style.display = 'flex';
+    markAllRead();
+  } catch(e) { showToast('Lỗi tải thông báo!', 'error'); }
+}
+
+async function markAllRead() {
+  try {
+    await fetch(`${API}/auth/notifications/read-all`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    loadNotificationCount();
+  } catch(e) { console.error(e); }
+}
+
+async function deleteNotif(id) {
+  try {
+    await fetch(`${API}/auth/notifications/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    showNotifications();
+  } catch(e) { console.error(e); }
+}
+
+async function addTestNotif() {
+  await fetch(`${API}/auth/notifications`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ message: 'Test thông báo lúc ' + new Date().toLocaleTimeString('vi-VN'), type: 'info' })
+  });
+  showNotifications();
+}
+
+// Load notification count khi khởi động
+loadNotificationCount();
+setInterval(loadNotificationCount, 60000);
