@@ -1,22 +1,20 @@
 ﻿const API = 'https://noteapp-backend-goqh.onrender.com/api';
 const token = localStorage.getItem('token');
-let user = JSON.parse(localStorage.getItem('user'));
+let user = null;
+try { user = JSON.parse(localStorage.getItem('user')); } catch(e) { console.error('User parse error', e); }
 let selectedColor = '#ffffff';
 let activeTag = null;
 let activeFolder = null;
 let currentPage = 1;
 const NOTES_PER_PAGE = 6;
 if (!token) window.location.href = 'index.html';
- 
 if (localStorage.getItem('darkMode') === 'true') {
   document.documentElement.setAttribute('data-theme', 'dark');
 }
- 
 document.getElementById('username-display').textContent = user?.username || 'User';
 if (user?.avatar) {
   document.getElementById('avatar-display').innerHTML = `<img src="${user.avatar}" class="avatar-img">`;
 }
- 
 loadNotes();
 loadStats();
 loadFolders();
@@ -124,8 +122,8 @@ function renderNotes(notes) {
   }
   grid.innerHTML = notes.map(note => {
     const id = note._id;
-    const title = note.title;
-    const content = note.content;
+    const title = escapeHTML(note.title);
+    const content = escapeHTML(note.content);
     const color = note.color || '#ffffff';
     const tags = note.tags || [];
     const folder = note.folder || 'Chung';

@@ -1,4 +1,7 @@
-﻿const express = require('express');
+﻿const rateLimit = require('express-rate-limit');
+const loginLimiter = rateLimit({ windowMs: 15*60*1000, max: 20, message: { message: 'Qua nhieu lan thu. Vui long thu lai sau 15 phut!' } });
+const apiLimiter = rateLimit({ windowMs: 1*60*1000, max: 100 });
+const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
@@ -45,6 +48,9 @@ const noteRoutes = require('./routes/notes');
 require('./reminder'); 
 // Health check - keep alive
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
+app.use('/api/auth/login', loginLimiter);
+app.use('/api/auth/register', loginLimiter);
+app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/notes', noteRoutes);
 
@@ -60,3 +66,5 @@ mongoose.connect(process.env.MONGO_URI)
     });
   })
   .catch((err) => console.error('âŒ MongoDB connection error:', err));
+
+

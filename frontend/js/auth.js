@@ -36,21 +36,20 @@ function showTab(tab) {
     buttons[1].classList.add('active');
   }
 }
-
+let isLoggingIn = false;
 async function login() {
+  if (isLoggingIn) return;
+  isLoggingIn = true;
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-
   if (!email || !password) {
     showToast('Vui lòng điền đầy đủ thông tin!', 'warning');
     return;
   }
-
   // Hiện loading
   const btn = document.querySelector('#login-form .btn-primary');
   btn.textContent = '⏳ Đang đăng nhập...';
   btn.disabled = true;
-
   try {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
@@ -72,6 +71,8 @@ async function login() {
     showToast('Lỗi kết nối server!', 'error');
     btn.textContent = 'Đăng nhập';
     btn.disabled = false;
+  } finally {
+    isLoggingIn = false;
   }
 }
 
