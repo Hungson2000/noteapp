@@ -376,30 +376,52 @@ function closeShareModal() { document.getElementById('share-modal').style.displa
 function copyShareLink() { navigator.clipboard.writeText(document.getElementById('share-link-input').value); showToast('Đã copy link chia sẻ!', 'success'); }
  
 // ==================== SEARCH ====================
-let searchTimeout = null;
+// ==================== SEARCH ====================
+let fuseInstance = null;
+let allNotesCache = [];
+
+function initFuse(notes) {
+  allNotesCache = notes;
+  fuseInstance = new Fuse(notes, {
+    keys: ['title', 'content', 'tags', 'folder'],
+    threshold: 0.4,
+    includeScore: true
+  });
+}
+
 async function searchNotes(q) {
-  if (!q.trim()) { loadNotes(activeTag, 1); return; }
+  if (!q || !q.trim()) { loadNotes(activeTag, 1); return; }
   try {
-    const res = await fetch(`${API}/notes/search?q=${encodeURIComponent(q)}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const notes = await res.json();
+    if (!fuseInstance || allNotesCache.length === 0) {
+      const res = await fetch(`${API}/notes?limit=1000`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      initFuse(data.notes);
+    }
+    const results = fuseInstance.search(q).map(r => r.item);
     const grid = document.getElementById('notes-grid');
-    if (!notes.length) { grid.innerHTML = '<p class="empty-state">🔍 Không tìm thấy kết quả</p>'; return; }
-    grid.innerHTML = notes.map(note => `
-      <div class="note-card" id="note-${note._id}" style="background:${note.color || '#fff'}">
-        <div class="note-card-header"><h4>${note.title}</h4></div>
-        <p>${note.content}</p>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">📂 ${note.folder || 'Chung'}</div>
-        <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
-        <div class="note-card-actions">
-          <button class="btn-edit" onclick="editNote('${note._id}', this)">✏️ Sửa</button>
-          <button class="btn-delete" onclick="deleteNote('${note._id}')">🗑️ Xóa</button>
-        </div>
-      </div>`).join('');
+    if (!results.length) {
+      grid.innerHTML = '<p class="empty-state">🔍 Không tìm thấy kết quả</p>';
+      return;
+    }
+    grid.innerHTML = results.map(note => {
+      const id = note._id;
+      const title = escapeHTML(note.title);
+      const content = escapeHTML(note.content);
+      return `
+        <div class="note-card" id="note-${id}" style="background:${note.color||'#fff'}">
+          <div class="note-card-header"><h4>${title}</h4></div>
+          <p>${content.substring(0,100)}${content.length>100?'...':''}</p>
+          <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
+          <div class="note-card-actions">
+            <button class="btn-edit" onclick="editNote('${id}',this)">✏️ Sửa</button>
+            <button class="btn-delete" onclick="deleteNote('${id}')">🗑️ Xóa</button>
+          </div>
+        </div>`;
+    }).join('');
   } catch(e) { console.error(e); }
 }
- 
 // ==================== UI ====================
 function toggleDarkMode() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1523,4 +1545,56 @@ function applyTemplate(index) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   showToast(`Đã áp dụng mẫu "${t.name}"!`, 'success');
   document.getElementById('note-title').focus();
+}
+// ==================== VOICE NOTE ====================
+let recognition = null;
+let isRecording = false;
+
+function toggleVoiceNote() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Trình duyệt không hỗ trợ Voice Note!', 'error'); return;
+  }
+  if (isRecording) {
+    recognition.stop();
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'vi-VN';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  const btn = document.getElementById('voice-btn');
+
+  recognition.onstart = () => {
+    isRecording = true;
+    if (btn) { btn.textContent = '🔴 Đang nghe...'; btn.style.background = '#e53e3e'; }
+    showToast('Đang lắng nghe... Nói đi!', 'info');
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    const editor = document.getElementById('note-content');
+    if (editor) {
+      const current = editor.innerText || '';
+      editor.innerText = current + transcript;
+    }
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    if (btn) { btn.textContent = '🎤 Voice'; btn.style.background = '#10b981'; }
+    showToast('Đã dừng ghi âm!', 'success');
+  };
+
+  recognition.onerror = (e) => {
+    isRecording = false;
+    if (btn) { btn.textContent = '🎤 Voice'; btn.style.background = '#10b981'; }
+    showToast('Lỗi micro: ' + e.error, 'error');
+  };
+
+  recognition.start();
 }
