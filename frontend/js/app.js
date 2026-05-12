@@ -1114,7 +1114,7 @@ async function loadNotificationCount() {
     const unread = notifs.filter(n => !n.read).length;
     const bell = document.getElementById('notif-bell');
     if (bell) {
-      bell.innerHTML = `🔔 ${unread > 0 ? `<span style="background:#e53e3e;color:white;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:4px;">${unread}</span>` : ''}`;
+      bell.innerHTML = `🔔 Thông báo ${unread > 0 ? `<span style="background:#e53e3e;color:white;border-radius:10px;padding:2px 6px;font-size:11px;margin-left:4px;">${unread}</span>` : ''}`;
     }
   } catch(e) { console.error(e); }
 }
