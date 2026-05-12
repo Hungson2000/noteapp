@@ -159,6 +159,7 @@ function renderNotes(notes) {
           ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
         </button>
         <button onclick="showHistory('${id}')" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
+        <button onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')" style="background:#0ea5e9;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">📱 QR</button>
         <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="background:${note.isPrivate ? '#e53e3e' : '#38a169'};color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">${note.isPrivate ? '🔒 Khóa' : '🔓 Khóa'}</button>
         <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
@@ -1197,3 +1198,69 @@ async function addTestNotif() {
 // Load notification count khi khởi động
 loadNotificationCount();
 setInterval(loadNotificationCount, 60000);
+// ==================== QR CODE SHARE ====================
+async function showQR(noteId, isShared, shareId) {
+  // Nếu chưa share thì share trước
+  if (!isShared) {
+    const res = await fetch(`${API}/notes/${noteId}/share`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const note = await res.json();
+    shareId = note.shareId;
+    loadNotes(activeTag);
+  }
+
+  const link = `https://noteapp-hungson.vercel.app/share.html?id=${shareId}`;
+
+  let modal = document.getElementById('qr-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'qr-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:360px;text-align:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;color:#1a1a1a;">📱 QR Code</h3>
+        <button onclick="document.getElementById('qr-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;">✕</button>
+      </div>
+      <div id="qr-canvas" style="display:flex;justify-content:center;margin-bottom:16px;"></div>
+      <p style="font-size:12px;color:#666;margin-bottom:12px;">Quét để xem ghi chú</p>
+      <div style="background:#f5f5f5;border-radius:8px;padding:8px;font-size:11px;color:#666;word-break:break-all;margin-bottom:12px;">${link}</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button onclick="navigator.clipboard.writeText('${link}');showToast('Đã copy link!','success')" style="background:#6366f1;color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;">📋 Copy link</button>
+        <button onclick="downloadQR()" style="background:#10b981;color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;">⬇️ Tải QR</button>
+      </div>
+    </div>`;
+
+  modal.style.display = 'flex';
+
+  // Tạo QR code
+  setTimeout(() => {
+    const container = document.getElementById('qr-canvas');
+    container.innerHTML = '';
+    QRCode.toCanvas(document.createElement('canvas'), link, {
+      width: 200,
+      margin: 2,
+      color: { dark: '#6366f1', light: '#ffffff' }
+    }, (err, canvas) => {
+      if (!err) {
+        canvas.id = 'qr-image';
+        container.appendChild(canvas);
+      }
+    });
+  }, 100);
+}
+
+function downloadQR() {
+  const canvas = document.getElementById('qr-image');
+  if (!canvas) return;
+  const a = document.createElement('a');
+  a.download = 'noteapp-qr.png';
+  a.href = canvas.toDataURL();
+  a.click();
+  showToast('Đã tải QR code!', 'success');
+}
