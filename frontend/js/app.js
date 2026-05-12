@@ -1598,3 +1598,70 @@ function toggleVoiceNote() {
 
   recognition.start();
 }
+// ==================== KANBAN BOARD ====================
+async function showKanban() {
+  const notes = await getAllNotes();
+  
+  let modal = document.getElementById('kanban-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'kanban-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+    document.body.appendChild(modal);
+  }
+
+  const cols = { todo: [], doing: [], done: [] };
+  notes.forEach(n => {
+    const status = n.kanban || 'todo';
+    if (cols[status]) cols[status].push(n);
+  });
+
+  const colConfig = [
+    { id: 'todo', label: '📋 TODO', color: '#6366f1', bg: '#ede9fe' },
+    { id: 'doing', label: '⚡ DOING', color: '#f59e0b', bg: '#fef3c7' },
+    { id: 'done', label: '✅ DONE', color: '#10b981', bg: '#d1fae5' }
+  ];
+
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:24px;width:98%;max-width:900px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">📱 Kanban Board</h3>
+        <button onclick="document.getElementById('kanban-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        ${colConfig.map(col => `
+          <div style="background:var(--bg-secondary);border-radius:12px;padding:12px;min-height:300px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <h4 style="margin:0;color:${col.color};">${col.label}</h4>
+              <span style="background:${col.color};color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">${cols[col.id].length}</span>
+            </div>
+            <div id="kanban-${col.id}" style="min-height:200px;">
+              ${cols[col.id].map(n => `
+                <div style="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:8px;border-left:3px solid ${col.color};box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                  <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${escapeHTML(n.title)}</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">${escapeHTML(n.content).substring(0,60)}${n.content.length>60?'...':''}</div>
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    ${colConfig.filter(c => c.id !== col.id).map(c => `
+                      <button onclick="moveKanban('${n._id}','${c.id}')" style="font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid ${c.color};color:${c.color};background:none;cursor:pointer;">→ ${c.label.split(' ')[1]}</button>
+                    `).join('')}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  modal.style.display = 'flex';
+}
+
+async function moveKanban(noteId, status) {
+  try {
+    await fetch(`${API}/notes/${noteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ kanban: status })
+    });
+    showToast(`Đã chuyển sang ${status.toUpperCase()}!`, 'success');
+    showKanban();
+  } catch(e) { showToast('Lỗi!', 'error'); }
+}
