@@ -1437,3 +1437,90 @@ async function updateGoal() {
     showGoals();
   } catch(e) { showToast('Lỗi cập nhật!', 'error'); }
 }
+// ==================== NOTE TEMPLATES ====================
+const noteTemplates = [
+  {
+    name: '📋 Họp nhóm',
+    icon: '📋',
+    title: 'Họp nhóm - ' + new Date().toLocaleDateString('vi-VN'),
+    content: '## Thành phần tham dự\n- \n\n## Nội dung thảo luận\n1. \n2. \n3. \n\n## Quyết định\n- \n\n## Việc cần làm\n- [ ] \n- [ ] \n\n## Ghi chú thêm\n',
+    folder: 'Công việc'
+  },
+  {
+    name: '📔 Nhật ký',
+    icon: '📔',
+    title: 'Nhật ký ' + new Date().toLocaleDateString('vi-VN'),
+    content: '## Hôm nay tôi đã làm\n- \n\n## Cảm xúc hôm nay\n\n## Điều tôi biết ơn\n1. \n2. \n3. \n\n## Mục tiêu ngày mai\n- \n',
+    folder: 'Cá nhân'
+  },
+  {
+    name: '✅ Todo List',
+    icon: '✅',
+    title: 'Todo - ' + new Date().toLocaleDateString('vi-VN'),
+    content: '## Quan trọng & Khẩn cấp\n- [ ] \n\n## Quan trọng\n- [ ] \n- [ ] \n\n## Bình thường\n- [ ] \n- [ ] \n',
+    folder: 'Chung'
+  },
+  {
+    name: '📚 Học tập',
+    icon: '📚',
+    title: 'Ghi chú học - ',
+    content: '## Chủ đề\n\n## Kiến thức chính\n1. \n2. \n3. \n\n## Ví dụ\n\n## Câu hỏi cần tìm hiểu\n- \n\n## Tóm tắt\n',
+    folder: 'Học tập'
+  },
+  {
+    name: '💡 Ý tưởng',
+    icon: '💡',
+    title: 'Ý tưởng: ',
+    content: '## Mô tả ý tưởng\n\n## Tại sao hay?\n\n## Cách thực hiện\n1. \n2. \n3. \n\n## Nguồn lực cần\n- \n\n## Deadline\n',
+    folder: 'Ý tưởng'
+  },
+  {
+    name: '🐛 Bug Report',
+    icon: '🐛',
+    title: 'Bug: ',
+    content: '## Mô tả lỗi\n\n## Các bước tái hiện\n1. \n2. \n3. \n\n## Kết quả mong đợi\n\n## Kết quả thực tế\n\n## Môi trường\n- OS: \n- Browser: \n\n## Screenshot\n',
+    folder: 'Dev'
+  }
+];
+
+function showTemplates() {
+  let modal = document.getElementById('templates-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'templates-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">📝 Chọn mẫu note</h3>
+        <button onclick="document.getElementById('templates-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        ${noteTemplates.map((t,i) => `
+          <div onclick="applyTemplate(${i})" style="padding:16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all 0.2s;text-align:center;"
+            onmouseover="this.style.borderColor='var(--primary)';this.style.background='var(--primary-light, #ede9fe)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.background=''">
+            <div style="font-size:32px;margin-bottom:8px;">${t.icon}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${t.name}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">📂 ${t.folder}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  modal.style.display = 'flex';
+}
+
+function applyTemplate(index) {
+  const t = noteTemplates[index];
+  document.getElementById('note-title').value = t.title;
+  setEditorContent(t.content);
+  const folderInput = document.getElementById('note-folder');
+  if (folderInput) folderInput.value = t.folder;
+  document.getElementById('templates-modal').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast(`Đã áp dụng mẫu "${t.name}"!`, 'success');
+  document.getElementById('note-title').focus();
+}
