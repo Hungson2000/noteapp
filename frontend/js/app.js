@@ -1665,3 +1665,95 @@ async function moveKanban(noteId, status) {
     showKanban();
   } catch(e) { showToast('Lỗi!', 'error'); }
 }
+// ==================== KEYBOARD SHORTCUTS ====================
+document.addEventListener('keydown', (e) => {
+  // Bỏ qua khi đang gõ trong input/textarea/editor
+  const tag = document.activeElement.tagName;
+  const isEditing = tag === 'INPUT' || tag === 'TEXTAREA' || 
+    document.activeElement.contentEditable === 'true';
+
+  // Ctrl+N — tạo note mới (focus vào tiêu đề)
+  if (e.ctrlKey && e.key === 'n') {
+    e.preventDefault();
+    document.getElementById('note-title').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('✏️ Ctrl+N: Tạo note mới', 'info', 1500);
+  }
+
+  // Ctrl+F — focus vào ô tìm kiếm
+  if (e.ctrlKey && e.key === 'f') {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+    showToast('🔍 Ctrl+F: Tìm kiếm', 'info', 1500);
+  }
+
+  // Ctrl+S — lưu note (khi đang trong editor)
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    const btn = document.querySelector('.btn-primary');
+    if (btn) { btn.click(); showToast('💾 Ctrl+S: Đã lưu!', 'success', 1500); }
+  }
+
+  // Ctrl+D — toggle dark mode
+  if (e.ctrlKey && e.key === 'd') {
+    e.preventDefault();
+    toggleDarkMode();
+  }
+
+  // Ctrl+K — mở Kanban
+  if (e.ctrlKey && e.key === 'k') {
+    e.preventDefault();
+    showKanban();
+  }
+
+  // Escape — đóng tất cả modal
+  if (e.key === 'Escape') {
+    document.querySelectorAll('[id$="-modal"]').forEach(m => {
+      m.style.display = 'none';
+    });
+    document.getElementById('pomodoro-modal') && 
+      (document.getElementById('pomodoro-modal').style.display = 'none');
+  }
+
+  // ? — hiện shortcuts help
+  if (e.key === '?' && !isEditing) {
+    showShortcutsHelp();
+  }
+});
+
+function showShortcutsHelp() {
+  let modal = document.getElementById('shortcuts-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'shortcuts-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;justify-content:center;align-items:center;';
+    document.body.appendChild(modal);
+  }
+
+  const shortcuts = [
+    { key: 'Ctrl+N', desc: 'Tạo note mới' },
+    { key: 'Ctrl+S', desc: 'Lưu note' },
+    { key: 'Ctrl+F', desc: 'Tìm kiếm' },
+    { key: 'Ctrl+D', desc: 'Toggle Dark Mode' },
+    { key: 'Ctrl+K', desc: 'Mở Kanban Board' },
+    { key: 'Escape', desc: 'Đóng modal' },
+    { key: '?', desc: 'Hiện phím tắt' },
+  ];
+
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:400px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">⌨️ Phím tắt</h3>
+        <button onclick="document.getElementById('shortcuts-modal').style.display='none'" 
+          style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      ${shortcuts.map(s => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-family:monospace;font-size:13px;font-weight:600;">${s.key}</span>
+          <span style="color:var(--text-muted);font-size:13px;">${s.desc}</span>
+        </div>`).join('')}
+      <p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:12px;">Nhấn <kbd style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;padding:1px 6px;">?</kbd> bất cứ lúc nào để xem lại</p>
+    </div>`;
+
+  modal.style.display = 'flex';
+}
