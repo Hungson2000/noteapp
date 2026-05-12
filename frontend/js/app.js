@@ -1357,3 +1357,83 @@ function setPomodoro(mode) {
   document.title = 'NoteApp';
   renderPomodoro();
 }
+// ==================== GOALS & STREAK ====================
+async function showGoals() {
+  try {
+    const res = await fetch(`${API}/auth/streak`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const { dailyGoal, streak, todayCount } = data;
+    const progress = Math.min((todayCount / dailyGoal) * 100, 100);
+    const done = todayCount >= dailyGoal;
+
+    let modal = document.getElementById('goals-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'goals-modal';
+      modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:420px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 style="margin:0;">🎯 Mục tiêu & Streak</h3>
+          <button onclick="document.getElementById('goals-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+          <div style="background:${done?'#10b981':'var(--primary)'};color:white;border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:36px;">${done?'✅':'📝'}</div>
+            <div style="font-size:24px;font-weight:bold;">${todayCount}/${dailyGoal}</div>
+            <div style="font-size:12px;opacity:0.9;">Hôm nay</div>
+          </div>
+          <div style="background:#f59e0b;color:white;border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:36px;">🔥</div>
+            <div style="font-size:24px;font-weight:bold;">${streak}</div>
+            <div style="font-size:12px;opacity:0.9;">Ngày liên tiếp</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+            <span>Tiến độ hôm nay</span>
+            <span style="font-weight:600;">${Math.round(progress)}%</span>
+          </div>
+          <div style="background:var(--bg-secondary);border-radius:999px;height:12px;">
+            <div style="background:${done?'#10b981':'var(--primary)'};height:12px;border-radius:999px;width:${progress}%;transition:width 0.5s;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+            ${done ? '🎉 Đã đạt mục tiêu hôm nay!' : `Còn ${dailyGoal - todayCount} note nữa để đạt mục tiêu!`}
+          </div>
+        </div>
+
+        <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;">
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">🎯 Đặt mục tiêu hàng ngày:</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="goal-input" value="${dailyGoal}" min="1" max="20"
+              style="width:80px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:16px;text-align:center;">
+            <span style="font-size:13px;color:var(--text-muted);">note/ngày</span>
+            <button onclick="updateGoal()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;">Lưu</button>
+          </div>
+        </div>
+      </div>`;
+
+    modal.style.display = 'flex';
+  } catch(e) { showToast('Lỗi tải goals!', 'error'); }
+}
+
+async function updateGoal() {
+  const val = parseInt(document.getElementById('goal-input').value);
+  if (!val || val < 1) { showToast('Mục tiêu không hợp lệ!', 'warning'); return; }
+  try {
+    await fetch(`${API}/auth/goal`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ dailyGoal: val })
+    });
+    showToast(`Đã đặt mục tiêu ${val} note/ngày!`, 'success');
+    showGoals();
+  } catch(e) { showToast('Lỗi cập nhật!', 'error'); }
+}

@@ -236,3 +236,28 @@ router.post('/notifications', auth, async (req, res) => {
     res.json({ message: 'Da them thong bao!' });
   } catch (err) { res.status(500).json({ message: 'Loi server' }); }
 });
+
+// GET /api/auth/streak
+router.get('/streak', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('dailyGoal streak lastActiveDate');
+    const Note = require('../models/Note');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayCount = await Note.countDocuments({
+      user: req.userId,
+      isDeleted: false,
+      createdAt: { $gte: today }
+    });
+    res.json({ dailyGoal: user.dailyGoal || 3, streak: user.streak || 0, todayCount });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});
+
+// PUT /api/auth/goal
+router.put('/goal', auth, async (req, res) => {
+  try {
+    const { dailyGoal } = req.body;
+    await User.findByIdAndUpdate(req.userId, { dailyGoal });
+    res.json({ message: 'Da cap nhat muc tieu!' });
+  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+});

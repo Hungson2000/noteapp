@@ -34,6 +34,9 @@ resetTokenExpiry: {
     type: String,
     default: null
   },
+  dailyGoal: { type: Number, default: 3 },
+  streak: { type: Number, default: 0 },
+  lastActiveDate: { type: Date, default: null },
   notifications: [{
     message: { type: String },
     type: { type: String, default: 'info' },
@@ -43,3 +46,4 @@ resetTokenExpiry: {
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
+
