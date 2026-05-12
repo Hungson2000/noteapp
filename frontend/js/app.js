@@ -818,3 +818,108 @@ async function showDashboard() {
     modal.style.display = 'flex';
   } catch(e) { showToast('Lỗi tải dashboard!', 'error'); }
 }
+ 
+// ==================== TOGGLE MENU ====================
+function toggleMenu(id) {
+  document.querySelectorAll('[id^="menu-"]').forEach(m => {
+    if (m.id !== id) m.style.display = 'none';
+  });
+  const menu = document.getElementById(id);
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('[id^="menu-"]') && !e.target.closest('button[onclick^="toggleMenu"]')) {
+    document.querySelectorAll('[id^="menu-"]').forEach(m => m.style.display = 'none');
+  }
+});
+ 
+// ==================== CALENDAR ====================
+let calendarDate = new Date();
+ 
+async function showCalendar() {
+  const notes = await getAllNotes();
+  let modal = document.getElementById('calendar-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'calendar-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+    document.body.appendChild(modal);
+  }
+  renderCalendar(modal, notes);
+  modal.style.display = 'flex';
+}
+ 
+function renderCalendar(modal, notes) {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthNames = ['Thang 1','Thang 2','Thang 3','Thang 4','Thang 5','Thang 6','Thang 7','Thang 8','Thang 9','Thang 10','Thang 11','Thang 12'];
+ 
+  const notesByDate = {};
+  notes.forEach(n => {
+    const d = new Date(n.createdAt).toDateString();
+    if (!notesByDate[d]) notesByDate[d] = [];
+    notesByDate[d].push(n);
+  });
+  const reminderByDate = {};
+  notes.forEach(n => {
+    if (n.reminderAt) {
+      const d = new Date(n.reminderAt).toDateString();
+      if (!reminderByDate[d]) reminderByDate[d] = [];
+      reminderByDate[d].push(n);
+    }
+  });
+ 
+  let cells = '';
+  const startPad = firstDay === 0 ? 6 : firstDay - 1;
+  for (let i = 0; i < startPad; i++) cells += '<div></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d);
+    const dateStr = dateObj.toDateString();
+    const isToday = dateStr === new Date().toDateString();
+    const hasNote = notesByDate[dateStr];
+    const hasReminder = reminderByDate[dateStr];
+    cells += `<div onclick="showNotesForDate('${dateStr}')" style="padding:8px 4px;min-height:60px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:${isToday ? 'var(--primary)' : 'var(--bg)'};color:${isToday ? 'white' : 'var(--text)'};transition:all 0.2s;">
+      <div style="font-weight:bold;font-size:14px;">${d}</div>
+      ${hasNote ? `<div style="background:${isToday?'rgba(255,255,255,0.3)':'#4f46e5'};color:white;border-radius:4px;font-size:10px;padding:1px 4px;margin-top:2px;">${hasNote.length} note</div>` : ''}
+      ${hasReminder ? `<div style="background:#f59e0b;color:white;border-radius:4px;font-size:10px;padding:1px 4px;margin-top:2px;">⏰${hasReminder.length}</div>` : ''}
+    </div>`;
+  }
+ 
+  modal.innerHTML = `<div style="background:var(--bg);border-radius:16px;padding:24px;width:95%;max-width:700px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <button onclick="changeMonth(-1)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:18px;">‹</button>
+      <h3 style="margin:0;">📅 ${monthNames[month]} ${year}</h3>
+      <button onclick="changeMonth(1)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:18px;">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;text-align:center;">
+      ${['T2','T3','T4','T5','T6','T7','CN'].map(d=>`<div style="font-weight:600;font-size:12px;color:var(--text-muted);padding:4px;">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cells}</div>
+    <div id="calendar-notes" style="margin-top:16px;"></div>
+    <div style="display:flex;justify-content:center;margin-top:16px;">
+      <button onclick="document.getElementById('calendar-modal').style.display='none'" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 24px;cursor:pointer;">✕ Dong</button>
+    </div>
+  </div>`;
+}
+ 
+async function changeMonth(dir) {
+  calendarDate.setMonth(calendarDate.getMonth() + dir);
+  const notes = await getAllNotes();
+  const modal = document.getElementById('calendar-modal');
+  renderCalendar(modal, notes);
+}
+ 
+function showNotesForDate(dateStr) {
+  const notes = window._notesData || [];
+  const container = document.getElementById('calendar-notes');
+  if (!container) return;
+  const dayNotes = notes.filter(n => new Date(n.createdAt).toDateString() === dateStr);
+  if (!dayNotes.length) { container.innerHTML = `<p style="text-align:center;color:var(--text-muted);">Khong co note nao ngay ${new Date(dateStr).toLocaleDateString('vi-VN')}</p>`; return; }
+  container.innerHTML = `<h4 style="margin-bottom:8px;">📝 Note ngay ${new Date(dateStr).toLocaleDateString('vi-VN')}:</h4>
+    ${dayNotes.map(n => `<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:${n.color||'var(--bg)'}">
+      <strong>${n.title}</strong>
+      <p style="font-size:13px;color:var(--text-muted);margin:4px 0;">${n.content.substring(0,80)}${n.content.length>80?'...':''}</p>
+    </div>`).join('')}`;
+}
