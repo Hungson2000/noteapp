@@ -1264,3 +1264,96 @@ function downloadQR() {
   a.click();
   showToast('Đã tải QR code!', 'success');
 }
+// ==================== POMODORO TIMER ====================
+let pomodoroInterval = null;
+let pomodoroSeconds = 25 * 60;
+let pomodoroRunning = false;
+let pomodoroMode = 'work'; // work | break
+
+function showPomodoro() {
+  let modal = document.getElementById('pomodoro-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'pomodoro-modal';
+    modal.style.cssText = 'display:none;position:fixed;bottom:80px;right:20px;z-index:999;';
+    document.body.appendChild(modal);
+  }
+  renderPomodoro();
+  modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderPomodoro() {
+  const modal = document.getElementById('pomodoro-modal');
+  if (!modal) return;
+  const mins = String(Math.floor(pomodoroSeconds / 60)).padStart(2, '0');
+  const secs = String(pomodoroSeconds % 60).padStart(2, '0');
+  const progress = pomodoroMode === 'work' ? (1 - pomodoroSeconds / (25*60)) * 100 : (1 - pomodoroSeconds / (5*60)) * 100;
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:20px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.2);border:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h4 style="margin:0;">⏱️ Pomodoro</h4>
+        <button onclick="document.getElementById('pomodoro-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${pomodoroMode === 'work' ? '🎯 Tập trung' : '☕ Nghỉ ngơi'}</div>
+        <div style="font-size:48px;font-weight:bold;color:${pomodoroMode === 'work' ? '#6366f1' : '#10b981'};font-family:monospace;">${mins}:${secs}</div>
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:999px;height:6px;margin-bottom:16px;">
+        <div style="background:${pomodoroMode === 'work' ? '#6366f1' : '#10b981'};height:6px;border-radius:999px;width:${progress}%;transition:width 1s;"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
+        <button onclick="togglePomodoro()" style="background:${pomodoroRunning ? '#e53e3e' : '#6366f1'};color:white;border:none;border-radius:8px;padding:8px 20px;cursor:pointer;font-weight:600;">
+          ${pomodoroRunning ? '⏸ Pause' : '▶ Start'}
+        </button>
+        <button onclick="resetPomodoro()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;">🔄</button>
+      </div>
+      <div style="display:flex;gap:6px;justify-content:center;">
+        <button onclick="setPomodoro('work')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid ${pomodoroMode==='work'?'#6366f1':'var(--border)'};background:${pomodoroMode==='work'?'#6366f1':'var(--bg)'};color:${pomodoroMode==='work'?'white':'var(--text)'};cursor:pointer;">🎯 25 phút</button>
+        <button onclick="setPomodoro('break')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid ${pomodoroMode==='break'?'#10b981':'var(--border)'};background:${pomodoroMode==='break'?'#10b981':'var(--bg)'};color:${pomodoroMode==='break'?'white':'var(--text)'};cursor:pointer;">☕ 5 phút</button>
+      </div>
+    </div>`;
+}
+
+function togglePomodoro() {
+  if (pomodoroRunning) {
+    clearInterval(pomodoroInterval);
+    pomodoroRunning = false;
+  } else {
+    pomodoroRunning = true;
+    pomodoroInterval = setInterval(() => {
+      pomodoroSeconds--;
+      if (pomodoroSeconds <= 0) {
+        clearInterval(pomodoroInterval);
+        pomodoroRunning = false;
+        const msg = pomodoroMode === 'work' ? '✅ Hết giờ tập trung! Nghỉ 5 phút nào!' : '🎯 Nghỉ xong! Tập trung tiếp nào!';
+        showToast(msg, 'success', 5000);
+        if (Notification.permission === 'granted') new Notification('NoteApp Pomodoro', { body: msg });
+        setPomodoro(pomodoroMode === 'work' ? 'break' : 'work');
+        return;
+      }
+      renderPomodoro();
+      // Update tab title
+      const mins = String(Math.floor(pomodoroSeconds/60)).padStart(2,'0');
+      const secs = String(pomodoroSeconds%60).padStart(2,'0');
+      document.title = `${mins}:${secs} - NoteApp`;
+    }, 1000);
+  }
+  renderPomodoro();
+}
+
+function resetPomodoro() {
+  clearInterval(pomodoroInterval);
+  pomodoroRunning = false;
+  pomodoroSeconds = pomodoroMode === 'work' ? 25*60 : 5*60;
+  document.title = 'NoteApp';
+  renderPomodoro();
+}
+
+function setPomodoro(mode) {
+  clearInterval(pomodoroInterval);
+  pomodoroRunning = false;
+  pomodoroMode = mode;
+  pomodoroSeconds = mode === 'work' ? 25*60 : 5*60;
+  document.title = 'NoteApp';
+  renderPomodoro();
+}
