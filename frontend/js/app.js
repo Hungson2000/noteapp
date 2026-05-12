@@ -977,3 +977,129 @@ const savedTheme = localStorage.getItem('appTheme');
 if (savedTheme && savedTheme !== 'purple') {
   document.documentElement.setAttribute('data-theme', savedTheme);
 }
+// ==================== ACTIVITY CHART ====================
+async function showActivityChart() {
+  const notes = await getAllNotes();
+  
+  let modal = document.getElementById('chart-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'chart-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
+    document.body.appendChild(modal);
+  }
+
+  // Chuẩn bị data 7 ngày gần nhất
+  const days = [];
+  const counts = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toDateString();
+    days.push(d.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric' }));
+    counts.push(notes.filter(n => new Date(n.createdAt).toDateString() === dateStr).length);
+  }
+
+  // Data theo folder
+  const folderCount = {};
+  notes.forEach(n => {
+    const f = n.folder || 'Chung';
+    folderCount[f] = (folderCount[f] || 0) + 1;
+  });
+
+  // Data theo priority
+  const priorityCount = { high: 0, medium: 0, low: 0 };
+  notes.forEach(n => { if (n.priority) priorityCount[n.priority]++; });
+
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:24px;width:95%;max-width:750px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">📊 Biểu đồ hoạt động</h3>
+        <button onclick="document.getElementById('chart-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      
+      <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <h4 style="margin:0 0 12px 0;">📅 Ghi chú 7 ngày gần nhất</h4>
+        <canvas id="chart-activity" height="120"></canvas>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;">
+          <h4 style="margin:0 0 12px 0;">📂 Theo Folder</h4>
+          <canvas id="chart-folder" height="160"></canvas>
+        </div>
+        <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;">
+          <h4 style="margin:0 0 12px 0;">🎯 Theo Ưu tiên</h4>
+          <canvas id="chart-priority" height="160"></canvas>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;">
+        <div style="background:var(--primary);color:white;border-radius:12px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:bold;">${notes.length}</div>
+          <div style="font-size:13px;opacity:0.9;">Tổng ghi chú</div>
+        </div>
+        <div style="background:#22c55e;color:white;border-radius:12px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:bold;">${counts.reduce((a,b)=>a+b,0)}</div>
+          <div style="font-size:13px;opacity:0.9;">7 ngày qua</div>
+        </div>
+        <div style="background:#f59e0b;color:white;border-radius:12px;padding:16px;text-align:center;">
+          <div style="font-size:28px;font-weight:bold;">${Object.keys(folderCount).length}</div>
+          <div style="font-size:13px;opacity:0.9;">Số Folder</div>
+        </div>
+      </div>
+    </div>`;
+
+  modal.style.display = 'flex';
+
+  // Render charts sau khi modal hiện
+  setTimeout(() => {
+    // Chart 1: Activity bar
+    new Chart(document.getElementById('chart-activity'), {
+      type: 'bar',
+      data: {
+        labels: days,
+        datasets: [{ 
+          label: 'Số ghi chú', 
+          data: counts,
+          backgroundColor: 'rgba(99,102,241,0.7)',
+          borderColor: '#6366f1',
+          borderWidth: 2,
+          borderRadius: 6
+        }]
+      },
+      options: { 
+        responsive: true, 
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+
+    // Chart 2: Folder doughnut
+    const folderLabels = Object.keys(folderCount);
+    const folderData = Object.values(folderCount);
+    const colors = ['#6366f1','#22c55e','#f59e0b','#e53e3e','#06b6d4','#8b5cf6','#ec4899'];
+    new Chart(document.getElementById('chart-folder'), {
+      type: 'doughnut',
+      data: {
+        labels: folderLabels,
+        datasets: [{ data: folderData, backgroundColor: colors.slice(0, folderLabels.length), borderWidth: 2 }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+    });
+
+    // Chart 3: Priority doughnut
+    new Chart(document.getElementById('chart-priority'), {
+      type: 'doughnut',
+      data: {
+        labels: ['🔴 Cao', '🟡 Trung bình', '🟢 Thấp'],
+        datasets: [{ 
+          data: [priorityCount.high, priorityCount.medium, priorityCount.low],
+          backgroundColor: ['#e53e3e','#f59e0b','#22c55e'],
+          borderWidth: 2
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+    });
+  }, 100);
+}
