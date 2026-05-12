@@ -2,19 +2,27 @@
 const token = localStorage.getItem('token');
 let user = null;
 try { user = JSON.parse(localStorage.getItem('user')); } catch(e) { console.error('User parse error', e); }
+ 
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
 let selectedColor = '#ffffff';
 let activeTag = null;
 let activeFolder = null;
 let currentPage = 1;
 const NOTES_PER_PAGE = 6;
 if (!token) window.location.href = 'index.html';
+ 
 if (localStorage.getItem('darkMode') === 'true') {
   document.documentElement.setAttribute('data-theme', 'dark');
 }
+ 
 document.getElementById('username-display').textContent = user?.username || 'User';
 if (user?.avatar) {
   document.getElementById('avatar-display').innerHTML = `<img src="${user.avatar}" class="avatar-img">`;
 }
+ 
 loadNotes();
 loadStats();
 loadFolders();
@@ -144,18 +152,15 @@ function renderNotes(notes) {
           ⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}
           <br>${getCountdown(note.reminderAt)}
         </div>` : ''}
-     <div class="note-card-actions">
+      <div class="note-card-actions">
         <button class="btn-edit" onclick="editNote('${id}', this)">✏️ Sửa</button>
         <button class="btn-delete" onclick="deleteNote('${id}')">🗑️ Xóa</button>
-        <div style="position:relative;display:inline-block;">
-          <button onclick="toggleMenu('menu-${id}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">···</button>
-          <div id="menu-${id}" style="display:none;position:absolute;right:0;bottom:36px;background:var(--bg);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:50;min-width:150px;padding:4px;">
-            <div onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}</div>
-            <div onclick="showHistory('${id}')" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">📜 Lịch sử</div>
-            <div onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">${note.isPrivate ? '🔒 Mở khóa' : '🔓 Đặt khóa'}</div>
-            <div id="remind-btn-${id}" onclick="showReminderPicker('${id}')" style="padding:8px 12px;cursor:pointer;border-radius:6px;font-size:13px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''">⏰ Nhắc nhở</div>
-          </div>
-        </div>
+        <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">
+          ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
+        </button>
+        <button onclick="showHistory('${id}')" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
+        <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="background:${note.isPrivate ? '#e53e3e' : '#38a169'};color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">${note.isPrivate ? '🔒 Khóa' : '🔓 Khóa'}</button>
+        <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
       </div>
     </div>`;
   }).join('');
@@ -812,117 +817,4 @@ async function showDashboard() {
       </div>`;
     modal.style.display = 'flex';
   } catch(e) { showToast('Lỗi tải dashboard!', 'error'); }
-}
-function toggleMenu(id) {
-  document.querySelectorAll('[id^="menu-"]').forEach(m => {
-    if (m.id !== id) m.style.display = 'none';
-  });
-  const menu = document.getElementById(id);
-  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('[id^="menu-"]') && !e.target.closest('button[onclick^="toggleMenu"]')) {
-    document.querySelectorAll('[id^="menu-"]').forEach(m => m.style.display = 'none');
-  }
-});
-// ==================== CALENDAR ====================
-let calendarDate = new Date();
-
-async function showCalendar() {
-  const notes = await getAllNotes();
-  let modal = document.getElementById('calendar-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'calendar-modal';
-    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;';
-    document.body.appendChild(modal);
-  }
-  renderCalendar(modal, notes);
-  modal.style.display = 'flex';
-}
-
-function renderCalendar(modal, notes) {
-  const year = calendarDate.getFullYear();
-  const month = calendarDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
-
-  // Map notes theo ngày
-  const notesByDate = {};
-  notes.forEach(n => {
-    const d = new Date(n.createdAt).toDateString();
-    if (!notesByDate[d]) notesByDate[d] = [];
-    notesByDate[d].push(n);
-  });
-  const reminderByDate = {};
-  notes.forEach(n => {
-    if (n.reminderAt) {
-      const d = new Date(n.reminderAt).toDateString();
-      if (!reminderByDate[d]) reminderByDate[d] = [];
-      reminderByDate[d].push(n);
-    }
-  });
-
-  let cells = '';
-  const startPad = firstDay === 0 ? 6 : firstDay - 1;
-  for (let i = 0; i < startPad; i++) cells += '<div></div>';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateObj = new Date(year, month, d);
-    const dateStr = dateObj.toDateString();
-    const isToday = dateStr === new Date().toDateString();
-    const hasNote = notesByDate[dateStr];
-    const hasReminder = reminderByDate[dateStr];
-    cells += `
-      <div onclick="showNotesForDate('${dateStr}')" style="
-        padding:8px 4px;min-height:60px;border:1px solid var(--border);border-radius:8px;cursor:pointer;
-        background:${isToday ? 'var(--primary)' : 'var(--bg)'};
-        color:${isToday ? 'white' : 'var(--text)'};
-        transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-        <div style="font-weight:bold;font-size:14px;">${d}</div>
-        ${hasNote ? `<div style="background:${isToday?'rgba(255,255,255,0.3)':'#4f46e5'};color:white;border-radius:4px;font-size:10px;padding:1px 4px;margin-top:2px;">${hasNote.length} note</div>` : ''}
-        ${hasReminder ? `<div style="background:#f59e0b;color:white;border-radius:4px;font-size:10px;padding:1px 4px;margin-top:2px;">⏰${hasReminder.length}</div>` : ''}
-      </div>`;
-  }
-
-  modal.innerHTML = `
-    <div style="background:var(--bg);border-radius:16px;padding:24px;width:95%;max-width:700px;max-height:90vh;overflow-y:auto;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <button onclick="changeMonth(-1)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:18px;">‹</button>
-        <h3 style="margin:0;">📅 ${monthNames[month]} ${year}</h3>
-        <button onclick="changeMonth(1)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:18px;">›</button>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;text-align:center;">
-        ${['T2','T3','T4','T5','T6','T7','CN'].map(d=>`<div style="font-weight:600;font-size:12px;color:var(--text-muted);padding:4px;">${d}</div>`).join('')}
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;" id="calendar-grid">
-        ${cells}
-      </div>
-      <div id="calendar-notes" style="margin-top:16px;"></div>
-      <div style="display:flex;justify-content:center;margin-top:16px;">
-        <button onclick="document.getElementById('calendar-modal').style.display='none'" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:8px 24px;cursor:pointer;">✕ Đóng</button>
-      </div>
-    </div>`;
-}
-
-async function changeMonth(dir) {
-  calendarDate.setMonth(calendarDate.getMonth() + dir);
-  const notes = await getAllNotes();
-  const modal = document.getElementById('calendar-modal');
-  renderCalendar(modal, notes);
-}
-
-function showNotesForDate(dateStr) {
-  const notes = window._notesData || [];
-  const container = document.getElementById('calendar-notes');
-  if (!container) return;
-  const dayNotes = notes.filter(n => new Date(n.createdAt).toDateString() === dateStr);
-  if (!dayNotes.length) { container.innerHTML = `<p style="text-align:center;color:var(--text-muted);">Không có note nào ngày ${new Date(dateStr).toLocaleDateString('vi-VN')}</p>`; return; }
-  container.innerHTML = `
-    <h4 style="margin-bottom:8px;">📝 Note ngày ${new Date(dateStr).toLocaleDateString('vi-VN')}:</h4>
-    ${dayNotes.map(n => `
-      <div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:${n.color||'var(--bg)'}">
-        <strong>${n.title}</strong>
-        <p style="font-size:13px;color:var(--text-muted);margin:4px 0;">${n.content.substring(0,80)}${n.content.length>80?'...':''}</p>
-      </div>`).join('')}`;
 }
