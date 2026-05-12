@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const loginLimiter = rateLimit({ windowMs: 15*60*1000, max: 20, message: { message: "Qua nhieu lan thu. Thu lai sau 15 phut!" } });
+const apiLimiter = rateLimit({ windowMs: 1*60*1000, max: 200 });
 
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
@@ -65,6 +66,7 @@ mongoose.connect(process.env.MONGO_URI)
     });
   })
   .catch((err) => console.error('âŒ MongoDB connection error:', err));
+
 
 
 
