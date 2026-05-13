@@ -349,7 +349,10 @@ async function updateNote(id) {
     }
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
 }
- 
+async function handleLock(id, isPrivate) {
+  if (isPrivate) unlockNote(id);
+  else showPrivacyModal(id, false);
+}
 async function toggleMoreMenu(e, btn) {
   e.stopPropagation();
   const menu = btn.nextElementSibling;
@@ -449,7 +452,7 @@ async function searchNotes(q) {
       <button onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">📤 Chia sẻ</button>
       <button onclick="showHistory('${id}')">📜 Lịch sử</button>
       <button onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')">📱 QR Code</button>
-      <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}">${note.isPrivate ? '🔒 Mở khóa' : '🔓 Khóa'}</button>
+      <button onclick="handleLock('${id}', ${note.isPrivate})">${note.isPrivate ? '🔒 Mở khóa' : '🔓 Khóa'}</button>
     </div>
   </div>
 </div>
