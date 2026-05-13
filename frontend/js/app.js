@@ -350,9 +350,8 @@ async function updateNote(id) {
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
 }
  
-async function deleteNote(id) {
- function toggleMoreMenu(btn) {
-  event.stopPropagation();
+async function toggleMoreMenu(e, btn) {
+  e.stopPropagation();
   const menu = btn.nextElementSibling;
   document.querySelectorAll('.more-menu.open').forEach(m => {
     if (m !== menu) m.classList.remove('open');
@@ -370,7 +369,6 @@ document.addEventListener('click', (e) => {
     const res = await fetch(`${API}/notes/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
     if (res.ok) { showToast('Xóa ghi chú thành công!', 'success'); loadNotes(activeTag); loadStats(); loadFolders(); }
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
-}
  
 async function togglePin(id, isPinned) {
   try {
@@ -444,7 +442,7 @@ async function searchNotes(q) {
   <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
   <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
   <div class="action-more-wrap">
-    <button class="action-btn more-btn" onclick="toggleMoreMenu(this)" title="Thêm">⋯</button>
+    <button class="action-btn more-btn" onclick="toggleMoreMenu(event, this)" title="Thêm">⋯</button>
     <div class="more-menu">
       <button onclick="togglePin('${id}', ${note.isPinned})">${note.isPinned ? '📌 Bỏ ghim' : '📌 Ghim'}</button>
       <button onclick="showReminderPicker('${id}')">⏰ Nhắc nhở</button>
