@@ -1757,3 +1757,63 @@ function showShortcutsHelp() {
 
   modal.style.display = 'flex';
 }
+// ==================== SETTINGS PANEL ====================
+function openSettings() {
+  let panel = document.getElementById('settings-panel');
+  let overlay = document.getElementById('settings-overlay');
+  
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'settings-panel';
+    document.body.appendChild(panel);
+    
+    overlay = document.createElement('div');
+    overlay.id = 'settings-overlay';
+    overlay.onclick = closeSettings;
+    document.body.appendChild(overlay);
+  }
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <h3 style="margin:0;">⚙️ Cài đặt</h3>
+      <button onclick="closeSettings()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px;">GIAO DIỆN</div>
+      <button onclick="toggleDarkMode()" class="btn-sidebar" style="width:100%;text-align:left;">🌙 Dark Mode</button>
+      <button onclick="showThemes();closeSettings()" class="btn-sidebar" style="width:100%;text-align:left;">🎨 Themes</button>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px;">TÀI KHOẢN</div>
+      <button onclick="toggleForm('update-form');closeSettings()" class="btn-sidebar" style="width:100%;text-align:left;">👤 Đổi thông tin</button>
+      <button onclick="toggleForm('password-form');closeSettings()" class="btn-sidebar" style="width:100%;text-align:left;">🔒 Đổi mật khẩu</button>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px;">DỮ LIỆU</div>
+      <button onclick="toggleExportMenu();closeSettings()" class="btn-sidebar" style="width:100%;text-align:left;">📥 Export TXT/PDF</button>
+      <button onclick="showActivityChart();closeSettings()" class="btn-sidebar" style="width:100%;text-align:left;">📊 Biểu đồ</button>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px;">CÔNG CỤ</div>
+      <button onclick="showShortcutsHelp()" class="btn-sidebar" style="width:100%;text-align:left;">⌨️ Phím tắt</button>
+      <button onclick="showPomodoro();closeSettings()" class="btn-sidebar" style="width:100%;text-align:left;">⏱️ Pomodoro</button>
+      <button onclick="showGoals();closeSettings()" class="btn-sidebar" style="width:100%;text-align:left;">🎯 Mục tiêu</button>
+    </div>
+
+    <button onclick="logout()" style="width:100%;padding:12px;background:#fff5f5;color:#e53e3e;border:1px solid #fed7d7;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;">🚪 Đăng xuất</button>
+  `;
+
+  panel.classList.add('open');
+  document.getElementById('settings-overlay').style.display = 'block';
+}
+
+function closeSettings() {
+  const panel = document.getElementById('settings-panel');
+  const overlay = document.getElementById('settings-overlay');
+  if (panel) panel.classList.remove('open');
+  if (overlay) overlay.style.display = 'none';
+}

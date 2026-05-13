@@ -50,28 +50,17 @@
       </div>
       <button class="btn-sidebar" onclick="showReminders()">⏰ Nhắc nhở</button>
       <button class="btn-sidebar" id="install-btn" style="display:none" onclick="installApp()">📲 Cài đặt App</button>
-      <button class="btn-sidebar" onclick="showThemes()">🎨 Themes</button>
+      
     <button class="btn-sidebar" onclick="showKanban()">📱 Kanban</button>
     <button class="btn-sidebar" onclick="showTemplates()">📝 Mẫu note</button>
     <button class="btn-sidebar" onclick="showGoals()">🎯 Mục tiêu</button>
     <button class="btn-sidebar" onclick="showPomodoro()">⏱️ Pomodoro</button>
-    <button class="btn-sidebar" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-      <button class="btn-sidebar" onclick="toggleForm('update-form')">⚙️ Đổi thông tin</button>
-      <div id="update-form" style="display:none;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;margin-bottom:4px;">
-        <input type="text" id="new-username" placeholder="Username mới" class="sidebar-input">
-        <input type="email" id="new-email" placeholder="Email mới" class="sidebar-input">
-        <button onclick="updateProfile()" class="btn-sidebar-save">💾 Lưu</button>
-        <button onclick="toggleForm('update-form')" class="btn-sidebar-cancel" style="margin-top:6px;">✕ Đóng</button>
-      </div>
-      <button class="btn-sidebar" onclick="toggleForm('password-form')">🔒 Đổi mật khẩu</button>
-      <div id="password-form" style="display:none;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;margin-bottom:4px;">
-        <input type="password" id="current-password" placeholder="Mật khẩu hiện tại" class="sidebar-input">
-        <input type="password" id="new-password" placeholder="Mật khẩu mới" class="sidebar-input">
-        <button onclick="changePassword()" class="btn-sidebar-save">💾 Lưu</button>
-        <button onclick="toggleForm('password-form')" class="btn-sidebar-cancel" style="margin-top:6px;">✕ Đóng</button>
-      </div>
+    
+      
+      
       <button class="btn-sidebar" onclick="showShortcutsHelp()">⌨️ Phím tắt</button>
-    <button class="btn-logout" onclick="logout()">🚪 Đăng xuất</button>
+    <button class="btn-sidebar" onclick="openSettings()" style="margin-top:auto;">⚙️ Cài đặt</button>
+      <button class="btn-logout" onclick="logout()">🚪 Đăng xuất</button>
     </div>
     <div class="main-content">
       <div class="main-header">
@@ -170,6 +159,7 @@
   </script>
 </body>
 </html>
+
 
 
 
