@@ -346,6 +346,19 @@ async function updateNote(id) {
 }
  
 async function deleteNote(id) {
+  function toggleMoreMenu(btn) {
+  const menu = btn.nextElementSibling;
+  document.querySelectorAll('.more-menu.open').forEach(m => {
+    if (m !== menu) m.classList.remove('open');
+  });
+  menu.classList.toggle('open');
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.action-more-wrap')) {
+    document.querySelectorAll('.more-menu.open').forEach(m => m.classList.remove('open'));
+  }
+});
   if (!confirm('Bạn có chắc muốn xóa ghi chú này?')) return;
   try {
     const res = await fetch(`${API}/notes/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
@@ -422,9 +435,21 @@ async function searchNotes(q) {
           <p>${content.substring(0,100)}${content.length>100?'...':''}</p>
           <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
           <div class="note-card-actions">
-            <button class="btn-edit" onclick="editNote('${id}',this)">✏️ Sửa</button>
-            <button class="btn-delete" onclick="deleteNote('${id}')">🗑️ Xóa</button>
-          </div>
+           <div class="note-card-actions">
+          <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
+          <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
+          <div class="action-more-wrap">
+          <button class="action-btn more-btn" onclick="toggleMoreMenu(this)" title="Thêm">⋯</button>
+          <div class="more-menu">
+      <button onclick="togglePin('${id}', ${note.isPinned})">${note.isPinned ? '📌 Bỏ ghim' : '📌 Ghim'}</button>
+      <button onclick="showReminderPicker('${id}')">⏰ Nhắc nhở</button>
+      <button onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">📤 Chia sẻ</button>
+      <button onclick="showHistory('${id}')">📜 Lịch sử</button>
+      <button onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')">📱 QR Code</button>
+      <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}">${note.isPrivate ? '🔒 Mở khóa' : '🔓 Khóa'}</button>
+    </div>
+  </div>
+</div>
         </div>`;
     }).join('');
   } catch(e) { console.error(e); }

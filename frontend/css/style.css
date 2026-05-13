@@ -959,3 +959,54 @@ input:focus, textarea:focus {
   color: #718096 !important;
   margin-bottom: 0 !important;
 }
+/* === More Menu === */
+.note-card-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.action-more-wrap {
+  position: relative;
+}
+
+.more-menu {
+  display: none;
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: var(--bg-card, #fff);
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+  z-index: 100;
+  min-width: 150px;
+  padding: 6px 0;
+  flex-direction: column;
+}
+
+.more-menu.open {
+  display: flex;
+}
+
+.more-menu button {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-main, #333);
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.more-menu button:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+
+.more-btn {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
