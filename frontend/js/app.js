@@ -136,33 +136,40 @@ function renderNotes(notes) {
     const tags = note.tags || [];
     const folder = note.folder || 'Chung';
     const isOverdue = note.reminderAt && new Date(note.reminderAt) < new Date();
+    const priority = note.priority || '';
+    const overdueHTML = isOverdue
+      ? `<span class="overdue-badge">⚠️ Đã quá hạn</span>`
+      : (note.reminderAt ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}</div>` : '');
+
     return `
-    <div class="note-card ${note.isPinned ? 'pinned' : ''} ${isOverdue ? 'overdue' : ''}" id="note-${id}" style="background:${color};${isOverdue ? 'border:2px solid #e53e3e;' : ''}">
-      <div class="note-card-header">
-        <h4>${title}</h4>
-        <span class="pin-icon ${note.isPinned ? 'active' : ''}" onclick="togglePin('${id}', ${note.isPinned})" title="${note.isPinned ? 'Bỏ ghim' : 'Ghim'}">📌</span>
-      </div>
-      <p>${content}</p>
-      ${tags.length ? `<div class="note-tags">${tags.map(t => `<span class="note-tag">#${t}</span>`).join('')}</div>` : ''}
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">📂 ${folder}</div>
-      ${getPriorityBadge(note.priority)}
-      <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
-      ${note.reminderAt ? `
-        <div style="font-size:11px;margin-bottom:6px;">
-          ⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}
-          <br>${getCountdown(note.reminderAt)}
-        </div>` : ''}
+    <div class="note-card ${note.isPinned ? 'pinned' : ''} ${isOverdue ? 'overdue' : ''}"
+         id="note-${id}"
+         data-priority="${priority}"
+         style="background:${color};">
+
       <div class="note-card-actions">
-        <button class="btn-edit" onclick="editNote('${id}', this)">✏️ Sửa</button>
-        <button class="btn-delete" onclick="deleteNote('${id}')">🗑️ Xóa</button>
-        <button class="btn-share ${note.isShared ? 'shared' : ''}" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">
-          ${note.isShared ? '🔗 Đã chia sẻ' : '📤 Chia sẻ'}
-        </button>
-        <button onclick="showHistory('${id}')" style="background:#6366f1;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">Lich su</button>
-        <button onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')" style="background:#0ea5e9;color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">📱 QR</button>
-        <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" style="background:${note.isPrivate ? '#e53e3e' : '#38a169'};color:white;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">${note.isPrivate ? '🔒 Khóa' : '🔓 Khóa'}</button>
-        <button id="remind-btn-${id}" onclick="showReminderPicker('${id}')" title="Đặt nhắc nhở" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">⏰</button>
+        <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
+        <button class="action-btn" onclick="togglePin('${id}', ${note.isPinned})" title="${note.isPinned ? 'Bỏ ghim' : 'Ghim'}">📌</button>
+        <button class="action-btn" onclick="showReminderPicker('${id}')" title="Nhắc nhở">⏰</button>
+        <button class="action-btn" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')" title="Chia sẻ">📤</button>
+        <button class="action-btn" onclick="showHistory('${id}')" title="Lịch sử">📜</button>
+        <button class="action-btn" onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')" title="QR">📱</button>
+        <button class="action-btn" onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" title="${note.isPrivate ? 'Mở khóa' : 'Khóa'}">${note.isPrivate ? '🔒' : '🔓'}</button>
+        <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
       </div>
+
+      <h4>${title}</h4>
+      <p>${content.length > 100 ? content.slice(0, 100) + '…' : content}</p>
+
+      ${tags.length ? `<div class="note-tags" style="margin-top:8px;">${tags.map(t => `<span class="note-tag">#${t}</span>`).join('')}</div>` : ''}
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+        <span style="font-size:11px;color:var(--text-muted);">📂 ${folder}</span>
+        <span style="font-size:11px;color:var(--text-muted);">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</span>
+      </div>
+
+      ${getPriorityBadge(note.priority)}
+      ${overdueHTML}
     </div>`;
   }).join('');
   window._notesData = notes;
