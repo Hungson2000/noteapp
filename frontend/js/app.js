@@ -145,7 +145,7 @@ function renderNotes(notes) {
     <div class="note-card ${note.isPinned ? 'pinned' : ''} ${isOverdue ? 'overdue' : ''}"
          id="note-${id}"
          data-priority="${priority}"
-         style="background:${color};">
+        style="background:${color};${priority === 'Cao' ? 'border-left:4px solid #e53e3e;' : priority === 'Thấp' ? 'border-left:4px solid #38a169;' : priority ? 'border-left:4px solid #f59e0b;' : ''}"
 
      <div class="note-card-actions">
   <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
