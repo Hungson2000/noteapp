@@ -351,7 +351,8 @@ async function updateNote(id) {
 }
  
 async function deleteNote(id) {
-  function toggleMoreMenu(btn) {
+ function toggleMoreMenu(btn) {
+  event.stopPropagation();
   const menu = btn.nextElementSibling;
   document.querySelectorAll('.more-menu.open').forEach(m => {
     if (m !== menu) m.classList.remove('open');
