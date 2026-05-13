@@ -434,13 +434,12 @@ async function searchNotes(q) {
           <div class="note-card-header"><h4>${title}</h4></div>
           <p>${content.substring(0,100)}${content.length>100?'...':''}</p>
           <p class="note-date">${new Date(note.createdAt).toLocaleDateString('vi-VN')}</p>
-          <div class="note-card-actions">
-           <div class="note-card-actions">
-          <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
-          <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
-          <div class="action-more-wrap">
-          <button class="action-btn more-btn" onclick="toggleMoreMenu(this)" title="Thêm">⋯</button>
-          <div class="more-menu">
+       <div class="note-card-actions">
+  <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
+  <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
+  <div class="action-more-wrap">
+    <button class="action-btn more-btn" onclick="toggleMoreMenu(this)" title="Thêm">⋯</button>
+    <div class="more-menu">
       <button onclick="togglePin('${id}', ${note.isPinned})">${note.isPinned ? '📌 Bỏ ghim' : '📌 Ghim'}</button>
       <button onclick="showReminderPicker('${id}')">⏰ Nhắc nhở</button>
       <button onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">📤 Chia sẻ</button>
