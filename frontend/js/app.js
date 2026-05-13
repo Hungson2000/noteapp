@@ -147,16 +147,21 @@ function renderNotes(notes) {
          data-priority="${priority}"
          style="background:${color};">
 
-      <div class="note-card-actions">
-        <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
-        <button class="action-btn" onclick="togglePin('${id}', ${note.isPinned})" title="${note.isPinned ? 'Bỏ ghim' : 'Ghim'}">📌</button>
-        <button class="action-btn" onclick="showReminderPicker('${id}')" title="Nhắc nhở">⏰</button>
-        <button class="action-btn" onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')" title="Chia sẻ">📤</button>
-        <button class="action-btn" onclick="showHistory('${id}')" title="Lịch sử">📜</button>
-        <button class="action-btn" onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')" title="QR">📱</button>
-        <button class="action-btn" onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}" title="${note.isPrivate ? 'Mở khóa' : 'Khóa'}">${note.isPrivate ? '🔒' : '🔓'}</button>
-        <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
-      </div>
+     <div class="note-card-actions">
+  <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
+  <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
+  <div class="action-more-wrap">
+    <button class="action-btn more-btn" onclick="toggleMoreMenu(this)" title="Thêm">⋯</button>
+    <div class="more-menu">
+      <button onclick="togglePin('${id}', ${note.isPinned})">${note.isPinned ? '📌 Bỏ ghim' : '📌 Ghim'}</button>
+      <button onclick="showReminderPicker('${id}')">⏰ Nhắc nhở</button>
+      <button onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">📤 Chia sẻ</button>
+      <button onclick="showHistory('${id}')">📜 Lịch sử</button>
+      <button onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')">📱 QR Code</button>
+      <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}">${note.isPrivate ? '🔒 Mở khóa' : '🔓 Khóa'}</button>
+    </div>
+  </div>
+</div>
 
       <h4>${title}</h4>
       <p>${content.length > 100 ? content.slice(0, 100) + '…' : content}</p>
