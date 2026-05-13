@@ -367,12 +367,14 @@ document.addEventListener('click', (e) => {
     document.querySelectorAll('.more-menu.open').forEach(m => m.classList.remove('open'));
   }
 });
+
+async function deleteNote(id) {
   if (!confirm('Bạn có chắc muốn xóa ghi chú này?')) return;
   try {
     const res = await fetch(`${API}/notes/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
     if (res.ok) { showToast('Xóa ghi chú thành công!', 'success'); loadNotes(activeTag); loadStats(); loadFolders(); }
   } catch (err) { showToast('Lỗi kết nối server!', 'error'); }
- 
+} 
 async function togglePin(id, isPinned) {
   try {
     await fetch(`${API}/notes/${id}`, {
