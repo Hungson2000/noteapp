@@ -353,20 +353,21 @@ async function handleLock(id, isPrivate) {
   if (isPrivate) unlockNote(id);
   else showPrivacyModal(id, false);
 }
-async function toggleMoreMenu(e, btn) {
-  e.stopPropagation();
+async function toggleMoreMenu(btn) {
   const menu = btn.nextElementSibling;
   document.querySelectorAll('.more-menu.open').forEach(m => {
     if (m !== menu) m.classList.remove('open');
   });
   menu.classList.toggle('open');
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!e.target.closest('.action-more-wrap')) {
+        menu.classList.remove('open');
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 0);
 }
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.action-more-wrap')) {
-    document.querySelectorAll('.more-menu.open').forEach(m => m.classList.remove('open'));
-  }
-});
 
 async function deleteNote(id) {
   if (!confirm('Bạn có chắc muốn xóa ghi chú này?')) return;
@@ -447,7 +448,7 @@ async function searchNotes(q) {
   <button class="action-btn edit" onclick="editNote('${id}', this)" title="Sửa">✏️</button>
   <button class="action-btn delete" onclick="deleteNote('${id}')" title="Xóa">🗑️</button>
   <div class="action-more-wrap">
-    <button class="action-btn more-btn" onclick="toggleMoreMenu(event, this)" title="Thêm">⋯</button>
+    <button class="action-btn more-btn" onclick="toggleMoreMenu(this)" title="Thêm">⋯</button>
     <div class="more-menu">
       <button onclick="togglePin('${id}', ${note.isPinned})">${note.isPinned ? '📌 Bỏ ghim' : '📌 Ghim'}</button>
       <button onclick="showReminderPicker('${id}')">⏰ Nhắc nhở</button>
