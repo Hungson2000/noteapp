@@ -10,32 +10,33 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 );
 
-// Lưu subscription
 router.post('/subscribe', auth, async (req, res) => {
   try {
     const { subscription } = req.body;
+    if (!subscription) return res.status(400).json({ message: 'Thieu subscription' });
     await User.findByIdAndUpdate(req.user.id, { pushSubscription: JSON.stringify(subscription) });
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    console.error('Push subscribe error:', err.message);
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Gửi push test
 router.post('/send-test', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    if (!user.pushSubscription) return res.status(400).json({ message: 'Chưa đăng ký push' });
+    if (!user.pushSubscription) return res.status(400).json({ message: 'Chua dang ky push' });
     const subscription = JSON.parse(user.pushSubscription);
     const payload = JSON.stringify({
-      title: '📚 NoteApp Nhắc nhở',
-      body: 'Bạn có note chưa ôn hơn 7 ngày rồi!',
+      title: 'NoteApp Nhac nho',
+      body: 'Ban co note chua on hon 7 ngay roi!',
       icon: '/icon-192.png'
     });
     await webpush.sendNotification(subscription, payload);
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi gửi push' });
+    console.error('Push send error:', err.message);
+    res.status(500).json({ message: err.message });
   }
 });
 
