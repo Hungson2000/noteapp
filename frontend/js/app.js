@@ -470,7 +470,12 @@ function toggleDarkMode() {
   localStorage.setItem('darkMode', !isDark);
   showToast(isDark ? '☀️ Light mode!' : '🌙 Dark mode!', 'info');
 }
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('open');
+}
 function toggleForm(id) { const f = document.getElementById(id); f.style.display = f.style.display === 'none' ? 'block' : 'none'; }
  
 // ==================== AVATAR ====================

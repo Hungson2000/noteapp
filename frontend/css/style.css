@@ -1104,3 +1104,105 @@ input:focus, textarea:focus {
 .btn-add-note.open {
   display: flex !important;
 }
+
+/* ==================== RESPONSIVE MOBILE COMPLETE ==================== */
+@media (max-width: 768px) {
+
+  /* Sidebar overlay */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 99;
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px !important;
+    left: -260px !important;
+    transition: left 0.25s ease !important;
+  }
+  .sidebar.open { left: 0 !important; }
+
+  /* Main content full width */
+  .main-content {
+    padding: 12px !important;
+    width: 100% !important;
+  }
+
+  /* Header */
+  .main-header h3 { font-size: 18px !important; }
+
+  /* Form */
+  .note-form-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .note-form-row input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .color-picker-row {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .editor-toolbar {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+  .editor-toolbar button {
+    font-size: 11px !important;
+    padding: 4px 6px !important;
+  }
+
+  /* Cards - 1 cột */
+  .notes-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Card actions luôn hiện trên mobile */
+  .note-card-actions {
+    opacity: 1 !important;
+    pointer-events: all !important;
+    flex-direction: row !important;
+    top: 8px !important;
+    right: 8px !important;
+  }
+
+  /* Stats box */
+  .stats-box {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  /* Settings panel full width */
+  #settings-panel {
+    width: 100% !important;
+    right: -100% !important;
+  }
+  #settings-panel.open { right: 0 !important; }
+
+  /* Toggle sidebar button */
+  .btn-toggle-sidebar-mobile {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--primary, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content { padding: 8px !important; }
+  .note-card { padding: 14px !important; }
+  .note-card h4 { font-size: 14px !important; }
+}
