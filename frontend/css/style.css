@@ -461,9 +461,6 @@ input:focus, textarea:focus {
   border-radius: 10px;
   font-size: 11px;
 }
-
-.note-card-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-
 .btn-edit {
   padding: 5px 10px;
   background: #eef2ff;
