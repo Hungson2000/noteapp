@@ -146,6 +146,31 @@
       });
     }
   </script>
+  <!-- UPDATE PROFILE FORM -->
+<div id="update-form" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;justify-content:center;align-items:center;">
+  <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:400px;">
+    <h3 style="margin:0 0 16px;">👤 Đổi thông tin</h3>
+    <input id="new-username" type="text" placeholder="Tên mới" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+    <input id="new-email" type="email" placeholder="Email mới" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+    <div style="display:flex;gap:8px;">
+      <button onclick="updateProfile()" style="flex:1;padding:10px;background:#6366f1;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Lưu</button>
+      <button onclick="document.getElementById('update-form').style.display='none'" style="flex:1;padding:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;cursor:pointer;">Huỷ</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD FORM -->
+<div id="password-form" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;justify-content:center;align-items:center;">
+  <div style="background:var(--bg);border-radius:16px;padding:24px;width:90%;max-width:400px;">
+    <h3 style="margin:0 0 16px;">🔒 Đổi mật khẩu</h3>
+    <input id="old-password" type="password" placeholder="Mật khẩu cũ" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+    <input id="new-password" type="password" placeholder="Mật khẩu mới" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;box-sizing:border-box;">
+    <div style="display:flex;gap:8px;">
+      <button onclick="changePassword()" style="flex:1;padding:10px;background:#6366f1;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Lưu</button>
+      <button onclick="document.getElementById('password-form').style.display='none'" style="flex:1;padding:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;cursor:pointer;">Huỷ</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
