@@ -14,7 +14,7 @@ router.post('/subscribe', auth, async (req, res) => {
   try {
     const { subscription } = req.body;
     if (!subscription) return res.status(400).json({ message: 'Thieu subscription' });
-    await User.findByIdAndUpdate(req.user.id, { pushSubscription: JSON.stringify(subscription) });
+    await User.findByIdAndUpdate(req.userId, { pushSubscription: JSON.stringify(subscription) });
     res.json({ success: true });
   } catch (err) {
     console.error('Push subscribe error:', err.message);
@@ -24,7 +24,7 @@ router.post('/subscribe', auth, async (req, res) => {
 
 router.post('/send-test', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.userId);
     if (!user.pushSubscription) return res.status(400).json({ message: 'Chua dang ky push' });
     const subscription = JSON.parse(user.pushSubscription);
     const payload = JSON.stringify({
