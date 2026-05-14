@@ -1929,6 +1929,7 @@ function urlBase64ToUint8Array(base64String) {
 
 async function subscribePush() {
   try {
+    const token = localStorage.getItem('token');
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
@@ -1941,7 +1942,7 @@ async function subscribePush() {
     });
     showToast('🔔 Đã bật thông báo!', 'success', 3000);
   } catch (err) {
-    showToast('❌ Lỗi bật thông báo: ' + err.message, 'error', 3000);
+    showToast('❌ Lỗi: ' + err.message, 'error', 3000);
   }
 }
 
