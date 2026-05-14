@@ -1064,3 +1064,43 @@ input:focus, textarea:focus {
   margin-bottom: 8px !important;
   margin-top: 4px !important;
 }
+
+/* ==================== COLLAPSE FORM ==================== */
+.note-form { 
+  border-radius: 14px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
+  overflow: hidden !important;
+  transition: all 0.25s ease !important;
+}
+.note-form-expandable {
+  display: none;
+}
+.note-form-expandable.open {
+  display: block;
+}
+.color-picker-row {
+  display: none !important;
+}
+.color-picker-row.open {
+  display: flex !important;
+}
+.editor-toolbar {
+  display: none !important;
+}
+.editor-toolbar.open {
+  display: flex !important;
+}
+#note-editor {
+  display: none !important;
+  min-height: 120px !important;
+}
+#note-editor.open {
+  display: block !important;
+}
+.btn-add-note {
+  display: none !important;
+}
+.btn-add-note.open {
+  display: flex !important;
+}

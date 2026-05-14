@@ -1858,3 +1858,32 @@ function closeSettings() {
   if (panel) panel.classList.remove('open');
   if (overlay) overlay.style.display = 'none';
 }
+// ==================== COLLAPSE FORM ====================
+function expandForm() {
+  document.querySelector('.color-picker-row').classList.add('open');
+  document.querySelector('.editor-toolbar').classList.add('open');
+  document.getElementById('note-editor').classList.add('open');
+  document.querySelector('.btn-add-note').classList.add('open');
+  document.getElementById('note-title').placeholder = 'Tiêu đề ghi chú...';
+}
+
+function collapseForm() {
+  const title = document.getElementById('note-title').value;
+  const content = document.getElementById('note-editor')?.innerText || '';
+  if (title || content) return; // Không collapse nếu đang có nội dung
+  document.querySelector('.color-picker-row').classList.remove('open');
+  document.querySelector('.editor-toolbar').classList.remove('open');
+  document.getElementById('note-editor').classList.remove('open');
+  document.querySelector('.btn-add-note').classList.remove('open');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const titleInput = document.getElementById('note-title');
+  if (titleInput) {
+    titleInput.addEventListener('focus', expandForm);
+  }
+  document.addEventListener('click', (e) => {
+    const form = document.querySelector('.note-form');
+    if (form && !form.contains(e.target)) collapseForm();
+  });
+});
