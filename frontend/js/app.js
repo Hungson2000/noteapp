@@ -138,9 +138,13 @@ function renderNotes(notes) {
     const isOverdue = note.reminderAt && new Date(note.reminderAt) < new Date();
     const priority = note.priority || '';
     const overdueHTML = isOverdue
+    
       ? `<span class="overdue-badge">⚠️ Đã quá hạn</span>`
       : (note.reminderAt ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">⏰ ${new Date(note.reminderAt).toLocaleString('vi-VN')}${note.reminderSent ? ' ✅' : ''}</div>` : '');
-
+     const daysSinceReview = note.lastReviewedAt
+     ? Math.floor((new Date() - new Date(note.lastReviewedAt)) / (1000 * 60 * 60 * 24))
+     : Math.floor((new Date() - new Date(note.createdAt)) / (1000 * 60 * 60 * 24));
+     const reviewHTML = daysSinceReview >= 3 ? `<div class="review-badge" onclick="markReviewed('${id}', event)">${daysSinceReview >= 7 ? '🔴' : '🟡'} Chưa ôn ${daysSinceReview} ngày</div>` : '';
     return `
     <div class="note-card ${note.isPinned ? 'pinned' : ''} ${isOverdue ? 'overdue' : ''}"
          id="note-${id}"
@@ -175,6 +179,7 @@ function renderNotes(notes) {
 
       ${getPriorityBadge(note.priority)}
       ${overdueHTML}
+      ${reviewHTML}
     </div>`;
   }).join('');
   window._notesData = notes;
@@ -1905,3 +1910,10 @@ window.addEventListener('load', () => {
     if (btnAdd) btnAdd.classList.remove('open');
   }, 100);
 });
+async function markReviewed(id, e) {
+  e.stopPropagation();
+  const token = localStorage.getItem('token');
+  await fetch(`/api/notes/${id}/review`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+  showToast('✅ Đã đánh dấu ôn xong!', 'success', 2000);
+  loadNotes();
+}
