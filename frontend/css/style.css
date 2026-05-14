@@ -1272,3 +1272,10 @@ input:focus, textarea:focus {
 .review-badge:hover {
   background: #fef3c7;
 }
+
+/* ==================== REVIEW BADGE RED ==================== */
+.review-badge.urgent {
+  background: #fff5f5 !important;
+  border-color: #fc8181 !important;
+  color: #c53030 !important;
+}

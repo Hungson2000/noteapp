@@ -144,7 +144,7 @@ function renderNotes(notes) {
      const daysSinceReview = note.lastReviewedAt
      ? Math.floor((new Date() - new Date(note.lastReviewedAt)) / (1000 * 60 * 60 * 24))
      : Math.floor((new Date() - new Date(note.createdAt)) / (1000 * 60 * 60 * 24));
-     const reviewHTML = daysSinceReview >= 3 ? `<div class="review-badge" onclick="markReviewed('${id}', event)">${daysSinceReview >= 7 ? '🔴' : '🟡'} Chưa ôn ${daysSinceReview} ngày</div>` : '';
+     const reviewHTML = daysSinceReview >= 3 ? `<div class="review-badge ${daysSinceReview >= 7 ? 'urgent' : ''}" onclick="markReviewed('${id}', event)">${daysSinceReview >= 7 ? '🔴' : '🟡'} Chưa ôn ${daysSinceReview} ngày</div>` : '';
     return `
     <div class="note-card ${note.isPinned ? 'pinned' : ''} ${isOverdue ? 'overdue' : ''}"
          id="note-${id}"
