@@ -1010,3 +1010,28 @@ input:focus, textarea:focus {
   font-weight: bold;
   letter-spacing: 1px;
 }
+/* ==================== FIX CARD ACTIONS FINAL ==================== */
+.note-card { position: relative !important; }
+
+.note-card-actions {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  margin-top: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.18s ease !important;
+  z-index: 10 !important;
+}
+
+.note-card:hover .note-card-actions {
+  opacity: 1 !important;
+  pointer-events: all !important;
+}
+
+.note-card h4, .note-card p {
+  padding-right: 40px !important;
+}
