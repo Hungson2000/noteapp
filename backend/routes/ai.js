@@ -9,7 +9,7 @@ router.post('/summarize', auth, async (req, res) => {
     
     const prompt = `Tom tat ghi chu sau trong 2-3 cau ngan gon bang tieng Viet:\nTieu de: ${title}\nNoi dung: ${content}`;
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
