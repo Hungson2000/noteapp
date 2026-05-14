@@ -1244,3 +1244,11 @@ input:focus, textarea:focus {
 .note-form .editor-toolbar.open { display: flex !important; }
 .note-form #note-content.open { display: block !important; }
 .note-form .btn-add-note.open { display: flex !important; }
+
+/* ==================== FORM COLLAPSE FIX FINAL ==================== */
+.note-form .btn-primary {
+  display: none !important;
+}
+.note-form .btn-primary.open {
+  display: flex !important;
+}

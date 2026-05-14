@@ -1868,7 +1868,7 @@ function expandForm() {
   document.querySelector('.color-picker-row').classList.add('open');
   document.querySelector('.editor-toolbar').classList.add('open');
   document.getElementById('note-content').classList.add('open');
-  document.querySelector('.btn-add-note').classList.add('open');
+  document.querySelector('.btn-primary').classList.add('open');
   document.getElementById('note-title').placeholder = 'Tiêu đề ghi chú...';
 }
 
@@ -1879,7 +1879,7 @@ function collapseForm() {
   document.querySelector('.color-picker-row').classList.remove('open');
   document.querySelector('.editor-toolbar').classList.remove('open');
   document.getElementById('note-content').classList.remove('open');
-  document.querySelector('.btn-add-note').classList.remove('open');
+  document.querySelector('.btn-primary').classList.remove('open');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1898,7 +1898,7 @@ window.addEventListener('load', () => {
     const colorRow = document.querySelector('.color-picker-row');
     const toolbar = document.querySelector('.editor-toolbar');
     const editor = document.getElementById('note-content');
-    const btnAdd = document.querySelector('.btn-add-note');
+    const btnAdd = document.querySelector('.btn-primary');
     if (colorRow) colorRow.classList.remove('open');
     if (toolbar) toolbar.classList.remove('open');
     if (editor) editor.classList.remove('open');
