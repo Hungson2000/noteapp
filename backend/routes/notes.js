@@ -310,7 +310,23 @@ router.post('/upload-image', auth, upload.single('image'), async (req, res) => {
   }
 });
  
-
+// Smart Reminder - đánh dấu đã ôn
+router.put('/:id/review', auth, async (req, res) => {
+  try {
+    const note = await Note.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      { 
+        lastReviewedAt: new Date(),
+        $inc: { reviewCount: 1 }
+      },
+      { new: true }
+    );
+    if (!note) return res.status(404).json({ message: 'Không tìm thấy note' });
+    res.json({ success: true, lastReviewedAt: note.lastReviewedAt, reviewCount: note.reviewCount });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+});
 module.exports = router;
 
 

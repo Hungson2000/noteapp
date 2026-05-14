@@ -18,6 +18,8 @@ const noteSchema = new mongoose.Schema({
   isPrivate: { type: Boolean, default: false },
   notePassword: { type: String, default: null },
   history: [{
+    lastReviewedAt: { type: Date, default: null },
+    reviewCount: { type: Number, default: 0 },
     title: String,
     content: String,
     editedAt: { type: Date, default: Date.now }
