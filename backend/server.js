@@ -45,6 +45,7 @@ app.use(generalLimiter);
 // Routes
 const authRoutes = require('./routes/auth');
 const noteRoutes = require('./routes/notes');
+const pushRoutes = require('./routes/push');
 require('./reminder'); 
 // Health check - keep alive
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
@@ -53,6 +54,7 @@ app.use('/api/auth/register', loginLimiter);
 app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/push', pushRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'NoteApp API is running!' });

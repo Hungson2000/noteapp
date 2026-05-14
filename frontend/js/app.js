@@ -1917,3 +1917,54 @@ async function markReviewed(id, e) {
   showToast('✅ Đã đánh dấu ôn xong!', 'success', 2000);
   loadNotes();
 }
+// ==================== PUSH NOTIFICATION ====================
+const VAPID_PUBLIC_KEY = 'BBqq21xV3gbffxxW_YHAZw6vtOGgv-ujOKAaPAuO0Zo6IsEHW2wpaYhHuKXYQD3-3Tm3DmQf-vQ4P0Pt8NBrlrc';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function subscribePush() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    await fetch(`${API}/push/subscribe`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub })
+    });
+    showToast('🔔 Đã bật thông báo!', 'success', 3000);
+  } catch (err) {
+    showToast('❌ Lỗi bật thông báo: ' + err.message, 'error', 3000);
+  }
+}
+
+async function enablePushNotification() {
+  if (!('Notification' in window)) { showToast('Trình duyệt không hỗ trợ!', 'error'); return; }
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') {
+    await subscribePush();
+  } else {
+    showToast('❌ Bạn đã từ chối thông báo!', 'error', 3000);
+  }
+}
+
+async function testPushNotification() {
+  try {
+    const res = await fetch(`${API}/push/send-test`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) showToast('✅ Đã gửi test notification!', 'success', 3000);
+    else showToast('❌ ' + data.message, 'error', 3000);
+  } catch (err) {
+    showToast('❌ Lỗi gửi test!', 'error', 3000);
+  }
+}
