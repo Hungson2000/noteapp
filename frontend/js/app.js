@@ -161,6 +161,7 @@ function renderNotes(notes) {
       <button onclick="showReminderPicker('${id}')">⏰ Nhắc nhở</button>
       <button onclick="toggleShare('${id}', ${note.isShared}, '${note.shareId}')">📤 Chia sẻ</button>
       <button onclick="showHistory('${id}')">📜 Lịch sử</button>
+      <button onclick="aiSummarize('${id}')">🤖 AI Tóm tắt</button>
       <button onclick="showQR('${id}', ${note.isShared}, '${note.shareId}')">📱 QR Code</button>
       <button onclick="${note.isPrivate ? `unlockNote('${id}')` : `showPrivacyModal('${id}', false)`}">${note.isPrivate ? '🔒 Mở khóa' : '🔓 Khóa'}</button>
     </div>
@@ -1967,5 +1968,27 @@ async function testPushNotification() {
     else showToast('❌ ' + data.message, 'error', 3000);
   } catch (err) {
     showToast('❌ Lỗi gửi test!', 'error', 3000);
+  }
+}
+// ==================== AI SUMMARIZE ====================
+async function aiSummarize(id) {
+  const note = window._notesData.find(n => n._id === id);
+  if (!note) return;
+  const token = localStorage.getItem('token');
+  showToast('🤖 AI đang tóm tắt...', 'info', 2000);
+  try {
+    const res = await fetch(`${API}/ai/summarize`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: note.title, content: note.content })
+    });
+    const data = await res.json();
+    if (data.summary) {
+      alert('🤖 Tóm tắt AI:\n\n' + data.summary);
+    } else {
+      showToast('❌ ' + data.message, 'error', 3000);
+    }
+  } catch (err) {
+    showToast('❌ Lỗi AI: ' + err.message, 'error', 3000);
   }
 }
