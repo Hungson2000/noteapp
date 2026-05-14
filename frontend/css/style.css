@@ -1206,3 +1206,29 @@ input:focus, textarea:focus {
   .note-card { padding: 14px !important; }
   .note-card h4 { font-size: 14px !important; }
 }
+
+/* ==================== MOBILE FIXES ==================== */
+@media (max-width: 768px) {
+  /* Collapse form trên mobile */
+  .color-picker-row { display: none !important; }
+  .editor-toolbar { display: none !important; }
+  #note-content { display: none !important; }
+  .btn-add-note { display: none !important; }
+
+  .color-picker-row.open { display: flex !important; }
+  .editor-toolbar.open { display: flex !important; }
+  #note-content.open { display: block !important; }
+  .btn-add-note.open { display: flex !important; }
+
+  /* Hamburger button */
+  .btn-toggle-sidebar-mobile {
+    background: #6366f1 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+  }
+}
