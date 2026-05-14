@@ -1892,3 +1892,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (form && !form.contains(e.target)) collapseForm();
   });
 });
+// ==================== AUTO COLLAPSE ON LOAD ====================
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const colorRow = document.querySelector('.color-picker-row');
+    const toolbar = document.querySelector('.editor-toolbar');
+    const editor = document.getElementById('note-content');
+    const btnAdd = document.querySelector('.btn-add-note');
+    if (colorRow) colorRow.classList.remove('open');
+    if (toolbar) toolbar.classList.remove('open');
+    if (editor) editor.classList.remove('open');
+    if (btnAdd) btnAdd.classList.remove('open');
+  }, 100);
+});
