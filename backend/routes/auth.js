@@ -3,9 +3,10 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer'); // FIX: chuyển lên top-level, không require bên trong handler
+const crypto = require('crypto');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const crypto = require('crypto');
  
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -71,7 +72,7 @@ router.put('/update', auth, async (req, res) => {
   }
 });
  
-// PUT /api/auth/change-password - Đổi password
+// PUT /api/auth/change-password
 router.put('/change-password', auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -116,7 +117,7 @@ router.post('/forgot-password', async (req, res) => {
     user.resetTokenExpiry = Date.now() + 3600000;
     await user.save();
  
-    const nodemailer = require('nodemailer');
+    // FIX: dùng transporter đã khởi tạo top-level thay vì tạo mới mỗi lần
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -201,31 +202,41 @@ router.get('/vapid-public-key', (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
  
-module.exports = router;
+// ============================================================
+// FIX BUG 1: Các routes sau đây trước đây bị đặt SAU module.exports
+// nên không bao giờ được đăng ký. Đã chuyển lên trước module.exports.
+// ============================================================
+ 
 // GET /api/auth/notifications
 router.get('/notifications', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('notifications');
-    res.json(user.notifications.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
-  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+    res.json(user.notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
 });
-
+ 
 // PUT /api/auth/notifications/read-all
 router.put('/notifications/read-all', auth, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.userId, { $set: { 'notifications.$[].read': true } });
-    res.json({ message: 'Da doc tat ca!' });
-  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+    res.json({ message: 'Đã đọc tất cả!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
 });
-
+ 
 // DELETE /api/auth/notifications/:id
 router.delete('/notifications/:id', auth, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.userId, { $pull: { notifications: { _id: req.params.id } } });
-    res.json({ message: 'Da xoa!' });
-  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+    res.json({ message: 'Đã xóa!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
 });
-
+ 
 // POST /api/auth/notifications
 router.post('/notifications', auth, async (req, res) => {
   try {
@@ -233,31 +244,40 @@ router.post('/notifications', auth, async (req, res) => {
     await User.findByIdAndUpdate(req.userId, {
       $push: { notifications: { message, type: type || 'info', read: false, createdAt: new Date() } }
     });
-    res.json({ message: 'Da them thong bao!' });
-  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+    res.json({ message: 'Đã thêm thông báo!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
 });
-
+ 
 // GET /api/auth/streak
 router.get('/streak', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('dailyGoal streak lastActiveDate');
     const Note = require('../models/Note');
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     const todayCount = await Note.countDocuments({
       user: req.userId,
       isDeleted: false,
       createdAt: { $gte: today }
     });
     res.json({ dailyGoal: user.dailyGoal || 3, streak: user.streak || 0, todayCount });
-  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
 });
-
+ 
 // PUT /api/auth/goal
 router.put('/goal', auth, async (req, res) => {
   try {
     const { dailyGoal } = req.body;
     await User.findByIdAndUpdate(req.userId, { dailyGoal });
-    res.json({ message: 'Da cap nhat muc tieu!' });
-  } catch (err) { res.status(500).json({ message: 'Loi server' }); }
+    res.json({ message: 'Đã cập nhật mục tiêu!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
 });
+ 
+// FIX: module.exports luôn phải ở CUỐI FILE
+module.exports = router

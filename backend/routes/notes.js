@@ -264,21 +264,20 @@ router.put('/:id/restore', auth, async (req, res) => {
   }
 });
  
-// DELETE /api/notes/:id - Chuyển vào thùng rác
-router.delete('/:id', auth, async (req, res) => {
+// FIX BUG 3: DELETE /trash/empty phải đứng TRƯỚC /:id và /:id/permanent
+// vì Express khớp theo thứ tự — nếu /:id đứng trước, "trash" sẽ bị coi là :id
+// và route /trash/empty không bao giờ được gọi.
+
+// DELETE /api/notes/trash/empty
+router.delete('/trash/empty', auth, async (req, res) => {
   try {
-    const note = await Note.findOneAndUpdate(
-      { _id: req.params.id, user: req.userId },
-      { isDeleted: true, deletedAt: new Date() },
-      { new: true }
-    );
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
-    res.json({ message: 'Đã chuyển vào thùng rác' });
+    await Note.deleteMany({ user: req.userId, isDeleted: true });
+    res.json({ message: 'Đã dọn sạch thùng rác' });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server' });
   }
 });
- 
+
 // DELETE /api/notes/:id/permanent
 router.delete('/:id/permanent', auth, async (req, res) => {
   try {
@@ -289,12 +288,17 @@ router.delete('/:id/permanent', auth, async (req, res) => {
     res.status(500).json({ message: 'Lỗi server' });
   }
 });
- 
-// DELETE /api/notes/trash/empty
-router.delete('/trash/empty', auth, async (req, res) => {
+
+// DELETE /api/notes/:id - Chuyển vào thùng rác (phải đứng SAU các route cụ thể hơn)
+router.delete('/:id', auth, async (req, res) => {
   try {
-    await Note.deleteMany({ user: req.userId, isDeleted: true });
-    res.json({ message: 'Đã dọn sạch thùng rác' });
+    const note = await Note.findOneAndUpdate(
+      { _id: req.params.id, user: req.userId },
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
+    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
+    res.json({ message: 'Đã chuyển vào thùng rác' });
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server' });
   }
@@ -311,11 +315,12 @@ router.post('/upload-image', auth, upload.single('image'), async (req, res) => {
 });
  
 // Smart Reminder - đánh dấu đã ôn
+// FIX BUG 2: req.user.id → req.userId (middleware auth gán req.userId, không phải req.user)
 router.put('/:id/review', auth, async (req, res) => {
   try {
     const note = await Note.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
-      { 
+      { _id: req.params.id, user: req.userId },
+      {
         lastReviewedAt: new Date(),
         $inc: { reviewCount: 1 }
       },
@@ -328,11 +333,3 @@ router.put('/:id/review', auth, async (req, res) => {
   }
 });
 module.exports = router;
-
-
-
-
-
-
-
-
