@@ -127,7 +127,7 @@ router.post('/forgot-password', rules.forgotPassword, validate, async (req, res)
       }
     });
  
-    const resetLink = `https://noteapp-hungson.vercel.app/reset-password.html?token=${resetToken}`;
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password.html?token=${resetToken}`;
  
     await transporter.sendMail({
       from: `"NoteApp" <${process.env.EMAIL_USER}>`,
