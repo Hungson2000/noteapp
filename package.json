@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "cloudinary": "^1.41.3",
     "express-validator": "^7.3.2"
   }
 }
