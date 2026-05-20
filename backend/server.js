@@ -50,8 +50,8 @@ const aiRoutes = require('./routes/ai');
 require('./reminder'); 
 // Health check - keep alive
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
-app.use('/api/auth/login', loginLimiter);
-app.use('/api/auth/register', loginLimiter);
+if (process.env.NODE_ENV !== 'test') app.use('/api/auth/login', loginLimiter);
+if (process.env.NODE_ENV !== 'test') app.use('/api/auth/register', loginLimiter);
 app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/notes', noteRoutes);
@@ -65,7 +65,8 @@ app.get('/', (req, res) => {
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-    app.listen(process.env.PORT || 5000, () => {
+    const PORT = process.env.PORT || 5000;
+if (process.env.NODE_ENV !== 'test') app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${process.env.PORT || 5000}`);
     });
   })
@@ -75,3 +76,5 @@ mongoose.connect(process.env.MONGO_URI)
 
 
 
+
+module.exports = app;
