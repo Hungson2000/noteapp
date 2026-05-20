@@ -1,11 +1,12 @@
-﻿const { upload } = require('../cloudinary');
+const { upload } = require('../cloudinary');
 const express = require('express');
 const router = express.Router();
 const Note = require('../models/Note');
 const auth = require('../middleware/auth');
+const { validate, rules } = require('../middleware/validate');
 const crypto = require('crypto');
  
-// GET /api/notes - Lấy ghi chú có phân trang
+// GET /api/notes - L?y ghi ch� c� ph�n trang
 router.get('/', auth, async (req, res) => {
   try {
     const { tag, page = 1, limit = 6 } = req.query;
@@ -20,7 +21,7 @@ router.get('/', auth, async (req, res) => {
       .limit(parseInt(limit));
     res.json({ notes, total, totalPages, currentPage: parseInt(page) });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
@@ -30,7 +31,7 @@ router.get('/trash', auth, async (req, res) => {
     const notes = await Note.find({ user: req.userId, isDeleted: true }).sort({ deletedAt: -1 });
     res.json(notes);
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
@@ -44,7 +45,7 @@ router.get('/stats', auth, async (req, res) => {
     const trash = await Note.countDocuments({ user: req.userId, isDeleted: true });
     res.json({ total, pinned, shared, totalTags: tags.length, trash });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
@@ -58,7 +59,7 @@ router.get('/reminders', auth, async (req, res) => {
     }).sort({ reminderAt: 1 });
     res.json(notes);
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
 // PUT /api/notes/:id/privacy - Dat/xoa mat khau note
@@ -127,7 +128,7 @@ router.get('/search', auth, async (req, res) => {
 });
  
 // POST /api/notes
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, rules.createNote, validate, async (req, res) => {
   try {
     const { title, content, tags, color } = req.body;
     const note = new Note({
@@ -139,11 +140,11 @@ router.post('/', auth, async (req, res) => {
     await note.save();
     res.status(201).json(note);
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
-// PUT /api/notes/:id - Cập nhật và lưu history
+// PUT /api/notes/:id - C?p nh?t v� l�u history
 router.get('/folders', auth, async (req, res) => {
   try {
     const folders = await Note.distinct('folder', { user: req.userId, isDeleted: false });
@@ -157,9 +158,9 @@ router.put('/:id', auth, async (req, res) => {
   try {
     const { title, content, tags, color, isPinned } = req.body;
     const oldNote = await Note.findOne({ _id: req.params.id, user: req.userId });
-    if (!oldNote) return res.status(404).json({ message: 'Không tìm thấy' });
+    if (!oldNote) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
  
-    // Lưu version cũ vào history (chỉ khi title hoặc content thay đổi)
+    // L�u version c? v�o history (ch? khi title ho?c content thay �?i)
     if (title !== undefined && content !== undefined &&
         (oldNote.title !== title || oldNote.content !== content)) {
       oldNote.history.push({
@@ -167,7 +168,7 @@ router.put('/:id', auth, async (req, res) => {
         content: oldNote.content,
         editedAt: new Date()
       });
-      // Giữ tối đa 10 version
+      // Gi? t?i �a 10 version
       if (oldNote.history.length > 10) oldNote.history.shift();
     }
  
@@ -180,37 +181,37 @@ router.put('/:id', auth, async (req, res) => {
  
     res.json(oldNote);
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
-// GET /api/notes/:id/history - Xem lịch sử chỉnh sửa
+// GET /api/notes/:id/history - Xem l?ch s? ch?nh s?a
 router.get('/:id/history', auth, async (req, res) => {
   try {
     const note = await Note.findOne({ _id: req.params.id, user: req.userId });
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
     res.json(note.history.reverse());
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
-// PUT /api/notes/:id/history/:index - Khôi phục version cũ
+// PUT /api/notes/:id/history/:index - Kh�i ph?c version c?
 router.put('/:id/history/:index', auth, async (req, res) => {
   try {
     const note = await Note.findOne({ _id: req.params.id, user: req.userId });
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
     const version = note.history[req.params.index];
-    if (!version) return res.status(404).json({ message: 'Không tìm thấy version' });
+    if (!version) return res.status(404).json({ message: 'Kh�ng t?m th?y version' });
  
-    // Lưu version hiện tại vào history trước khi khôi phục
+    // L�u version hi?n t?i v�o history tr�?c khi kh�i ph?c
     note.history.push({ title: note.title, content: note.content, editedAt: new Date() });
     note.title = version.title;
     note.content = version.content;
     await note.save();
     res.json(note);
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
@@ -218,7 +219,7 @@ router.put('/:id/history/:index', auth, async (req, res) => {
 router.put('/:id/share', auth, async (req, res) => {
   try {
     const note = await Note.findOne({ _id: req.params.id, user: req.userId });
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
     if (!note.isShared) {
       note.shareId = crypto.randomBytes(8).toString('hex');
       note.isShared = true;
@@ -229,7 +230,7 @@ router.put('/:id/share', auth, async (req, res) => {
     await note.save();
     res.json(note);
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
@@ -242,10 +243,10 @@ router.put('/:id/reminder', auth, async (req, res) => {
       { reminderAt: reminderAt || null, reminderSent: false },
       { new: true }
     );
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
     res.json(note);
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
@@ -257,24 +258,24 @@ router.put('/:id/restore', auth, async (req, res) => {
       { isDeleted: false, deletedAt: null },
       { new: true }
     );
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
-    res.json({ message: 'Đã khôi phục ghi chú' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
+    res.json({ message: '�? kh�i ph?c ghi ch�' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
-// FIX BUG 3: DELETE /trash/empty phải đứng TRƯỚC /:id và /:id/permanent
-// vì Express khớp theo thứ tự — nếu /:id đứng trước, "trash" sẽ bị coi là :id
-// và route /trash/empty không bao giờ được gọi.
+// FIX BUG 3: DELETE /trash/empty ph?i �?ng TR�?C /:id v� /:id/permanent
+// v? Express kh?p theo th? t? � n?u /:id �?ng tr�?c, "trash" s? b? coi l� :id
+// v� route /trash/empty kh�ng bao gi? ��?c g?i.
 
 // DELETE /api/notes/trash/empty
 router.delete('/trash/empty', auth, async (req, res) => {
   try {
     await Note.deleteMany({ user: req.userId, isDeleted: true });
-    res.json({ message: 'Đã dọn sạch thùng rác' });
+    res.json({ message: '�? d?n s?ch th�ng r�c' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
 
@@ -282,14 +283,14 @@ router.delete('/trash/empty', auth, async (req, res) => {
 router.delete('/:id/permanent', auth, async (req, res) => {
   try {
     const note = await Note.findOneAndDelete({ _id: req.params.id, user: req.userId });
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
-    res.json({ message: 'Đã xóa vĩnh viễn' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
+    res.json({ message: '�? x�a v?nh vi?n' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
 
-// DELETE /api/notes/:id - Chuyển vào thùng rác (phải đứng SAU các route cụ thể hơn)
+// DELETE /api/notes/:id - Chuy?n v�o th�ng r�c (ph?i �?ng SAU c�c route c? th? h�n)
 router.delete('/:id', auth, async (req, res) => {
   try {
     const note = await Note.findOneAndUpdate(
@@ -297,25 +298,25 @@ router.delete('/:id', auth, async (req, res) => {
       { isDeleted: true, deletedAt: new Date() },
       { new: true }
     );
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy' });
-    res.json({ message: 'Đã chuyển vào thùng rác' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y' });
+    res.json({ message: '�? chuy?n v�o th�ng r�c' });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
  
 // POST /api/notes/upload-image
 router.post('/upload-image', auth, upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ message: 'Không có file!' });
+    if (!req.file) return res.status(400).json({ message: 'Kh�ng c� file!' });
     res.json({ url: req.file.path });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi upload ảnh!' });
+    res.status(500).json({ message: 'L?i upload ?nh!' });
   }
 });
  
-// Smart Reminder - đánh dấu đã ôn
-// FIX BUG 2: req.user.id → req.userId (middleware auth gán req.userId, không phải req.user)
+// Smart Reminder - ��nh d?u �? �n
+// FIX BUG 2: req.user.id ? req.userId (middleware auth g�n req.userId, kh�ng ph?i req.user)
 router.put('/:id/review', auth, async (req, res) => {
   try {
     const note = await Note.findOneAndUpdate(
@@ -326,10 +327,10 @@ router.put('/:id/review', auth, async (req, res) => {
       },
       { new: true }
     );
-    if (!note) return res.status(404).json({ message: 'Không tìm thấy note' });
+    if (!note) return res.status(404).json({ message: 'Kh�ng t?m th?y note' });
     res.json({ success: true, lastReviewedAt: note.lastReviewedAt, reviewCount: note.reviewCount });
   } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(500).json({ message: 'L?i server' });
   }
 });
 module.exports = router;
