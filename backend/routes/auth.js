@@ -212,7 +212,8 @@ router.get('/vapid-public-key', (req, res) => {
 router.get('/notifications', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('notifications');
-    res.json(user.notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json((user.notifications || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
   } catch (err) {
     res.status(500).json({ message: 'L?i server' });
   }
