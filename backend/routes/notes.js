@@ -241,7 +241,7 @@ router.put('/:id/reminder', auth, async (req, res) => {
     const note = await Note.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
       { reminderAt: reminderAt || null, reminderSent: false },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!note) return res.status(404).json({ message: 'Không t?m th?y' });
     res.json(note);
@@ -256,7 +256,7 @@ router.put('/:id/restore', auth, async (req, res) => {
     const note = await Note.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
       { isDeleted: false, deletedAt: null },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!note) return res.status(404).json({ message: 'Không t?m th?y' });
     res.json({ message: 'Ð? khôi ph?c ghi chú' });
@@ -296,7 +296,7 @@ router.delete('/:id', auth, async (req, res) => {
     const note = await Note.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
       { isDeleted: true, deletedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!note) return res.status(404).json({ message: 'Không t?m th?y' });
     res.json({ message: 'Ð? chuy?n vào thùng rác' });
@@ -325,7 +325,7 @@ router.put('/:id/review', auth, async (req, res) => {
         lastReviewedAt: new Date(),
         $inc: { reviewCount: 1 }
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!note) return res.status(404).json({ message: 'Không t?m th?y note' });
     res.json({ success: true, lastReviewedAt: note.lastReviewedAt, reviewCount: note.reviewCount });

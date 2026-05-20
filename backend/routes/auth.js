@@ -65,7 +65,7 @@ router.put('/update', auth, async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.userId,
       { username, email },
-      { new: true }
+      { returnDocument: 'after' }
     ).select('-password');
     res.json({ message: 'C?p nh?t thành công!', user });
   } catch (err) {
@@ -97,7 +97,7 @@ router.put('/avatar', auth, upload.single('avatar'), async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.userId,
       { avatar: avatarUrl },
-      { new: true }
+      { returnDocument: 'after' }
     ).select('-password');
     res.json({ message: 'C?p nh?t avatar thành công!', user });
   } catch (err) {
