@@ -1,4 +1,5 @@
-﻿const API = 'https://noteapp-backend-goqh.onrender.com/api';
+﻿
+const API = 'https://noteapp-backend-goqh.onrender.com/api';
 const token = localStorage.getItem('token');
 let user = null;
 try { user = JSON.parse(localStorage.getItem('user')); } catch(e) { console.error('User parse error', e); }
@@ -359,16 +360,36 @@ async function handleLock(id, isPrivate) {
   if (isPrivate) unlockNote(id);
   else showPrivacyModal(id, false);
 }
+// Global popup menu
+let _activeMoreMenu = null;
+function _closeMoreMenu() {
+  if (_activeMoreMenu) {
+    _activeMoreMenu.remove();
+    _activeMoreMenu = null;
+  }
+}
 async function toggleMoreMenu(btn) {
-  const menu = btn.nextElementSibling;
-  document.querySelectorAll('.more-menu.open').forEach(m => {
-    if (m !== menu) m.classList.remove('open');
-  });
-  menu.classList.toggle('open');
+  if (_activeMoreMenu) { _closeMoreMenu(); return; }
+  const source = btn.nextElementSibling;
+  const rect = btn.getBoundingClientRect();
+  // Clone menu ra body để thoat overflow:hidden
+  const menu = source.cloneNode(true);
+  menu.style.position = 'fixed';
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.style.zIndex = '99999';
+  menu.style.display = 'flex';
+  menu.style.flexDirection = 'column';
+  // Copy onclick attributes from source buttons
+  const srcBtns = source.querySelectorAll('button');
+  const newBtns = menu.querySelectorAll('button');
+  srcBtns.forEach((sb, i) => { newBtns[i].setAttribute('onclick', sb.getAttribute('onclick')); });
+  document.body.appendChild(menu);
+  _activeMoreMenu = menu;
   setTimeout(() => {
     document.addEventListener('click', function closeMenu(e) {
-      if (!e.target.closest('.action-more-wrap')) {
-        menu.classList.remove('open');
+      if (!e.target.closest('.more-menu')) {
+        _closeMoreMenu();
         document.removeEventListener('click', closeMenu);
       }
     });
