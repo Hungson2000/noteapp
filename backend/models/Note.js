@@ -1,8 +1,8 @@
 ﻿const mongoose = require('mongoose');
 
 const noteSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true },
-  content: { type: String, required: true },
+  title: { type: String, required: true, trim: true, maxlength: 200 },
+   content: { type: String, required: true, maxlength: 50000 },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   tags: [{ type: String, trim: true }],
   color: { type: String, default: '#ffffff' },
