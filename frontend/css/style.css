@@ -967,17 +967,16 @@ input:focus, textarea:focus {
   position: relative;
 }
 
+
 .more-menu {
   display: none;
-  position: absolute;
-  top: 110%;
-  right: 0;
+  position: fixed;
   background: var(--bg-card, #fff);
   border: 1px solid #e0e0e0;
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.13);
-  z-index: 100;
-  min-width: 150px;
+  z-index: 9999;
+  min-width: 160px;
   padding: 6px 0;
   flex-direction: column;
 }
