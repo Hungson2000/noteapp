@@ -109,20 +109,51 @@ async function loadNotes(tag = null, page = 1) {
   try {
     currentPage = page;
     showSkeleton();
+
+    // Hiện banner "đang kết nối" nếu chờ quá 3 giây
+    const slowTimer = setTimeout(() => {
+      const grid = document.getElementById('notes-grid');
+      if (grid && grid.querySelector('.skeleton-card')) {
+        const banner = document.createElement('div');
+        banner.id = 'slow-banner';
+        banner.style.cssText = 'text-align:center;padding:12px;background:#fef3c7;color:#92400e;border-radius:8px;margin-bottom:12px;font-size:13px;';
+        banner.innerHTML = '⏳ Server đang khởi động, vui lòng chờ 20-30 giây...';
+        grid.before(banner);
+      }
+    }, 3000);
+
     let url = `${API}/notes?page=${page}&limit=${NOTES_PER_PAGE}`;
     if (tag) url += `&tag=${tag}`;
     if (activeFolder) url += `&folder=${encodeURIComponent(activeFolder)}`;
-    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
+    clearTimeout(slowTimer);
+    document.getElementById('slow-banner')?.remove();
+
     if (res.status === 401) { localStorage.clear(); window.location.href = 'index.html'; return; }
     const data = await res.json();
     renderNotes(data.notes);
     renderTagsFilter(data.notes);
     renderPagination(data.totalPages, data.currentPage, tag);
   } catch (err) {
-    showToast('Lỗi kết nối server!', 'error');
+    document.getElementById('slow-banner')?.remove();
+    if (err.name === 'AbortError') {
+      showToast('Server không phản hồi sau 60 giây. Vui lòng thử lại!', 'error');
+      const grid = document.getElementById('notes-grid');
+      if (grid) grid.innerHTML = '<p class="empty-state">⚠️ Không kết nối được server. <a href="" onclick="location.reload()">Thử lại</a></p>';
+    } else {
+      showToast('Lỗi kết nối server!', 'error');
+    }
   }
 }
- 
 function renderNotes(notes) {
   const grid = document.getElementById('notes-grid');
   if (notes.length === 0) {
