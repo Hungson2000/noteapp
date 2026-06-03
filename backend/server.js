@@ -3,7 +3,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const loginLimiter = rateLimit({ windowMs: 15*60*1000, max: 5, message: { message: "Qua nhieu lan thu. Thu lai sau 15 phut!" } });
+const loginLimiter = rateLimit({ 
+  windowMs: 15*60*1000, 
+  max: 20,
+  message: { message: "Quá nhiều lần thử. Vui lòng thử lại sau 15 phút!" },
+  skipSuccessfulRequests: true
+});
 const apiLimiter = rateLimit({ windowMs: 1*60*1000, max: 200 });
 
 if (process.env.NODE_ENV !== 'production') {
