@@ -1414,13 +1414,14 @@ input:focus, textarea:focus {
 .action-btn.delete:hover {
   background: rgba(229,62,62,0.1);
 }
-
 /* More menu */
 .more-menu {
   min-width: 160px;
   border-radius: 12px;
   padding: 6px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  position: fixed !important;
+  z-index: 9999 !important;
 }
 
 .more-menu button {
