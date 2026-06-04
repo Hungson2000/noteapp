@@ -1,4 +1,4 @@
-﻿# 📝 NoteApp
+# 📝 NoteApp
 
 A full-stack note-taking web application with smart review reminders, AI assistant, and productivity tools — built for students and learners.
 
@@ -72,19 +72,17 @@ A full-stack note-taking web application with smart review reminders, AI assista
 - Gmail account (for email features)
 
 ### 1. Clone the repository
-```bash
+\\ash
 git clone https://github.com/Hungson2000/noteapp.git
 cd noteapp
-```
-
+\
 ### 2. Setup Backend
-```bash
+\\ash
 cd backend
 npm install
-```
-
-Create a `.env` file in the `backend` folder:
-```env
+\
+Create a \.env\ file in the \ackend\ folder:
+\\env
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
@@ -102,21 +100,20 @@ VAPID_EMAIL=mailto:your@email.com
 
 GEMINI_API_KEY=your_gemini_api_key
 FRONTEND_URL=http://localhost:3000
-```
-
+\
 Start the backend:
-```bash
+\\ash
 npm run dev
-```
-
+\
 ### 3. Setup Frontend
-Open `frontend/index.html` in your browser, or use Live Server in VS Code.
+Open \rontend/index.html\ in your browser, or use Live Server in VS Code.
 
-> Make sure the API URL in the frontend JS points to `http://localhost:5000`
-
+> Make sure the API URL in the frontend JS points to \http://localhost:5000
 ---
 
-## 📁 Project Structurenoteapp/
+## 📁 Project Structure
+
+\noteapp/
 ├── backend/
 │   ├── middleware/
 │   │   ├── auth.js          # JWT middleware
@@ -133,13 +130,15 @@ Open `frontend/index.html` in your browser, or use Live Server in VS Code.
 │   ├── reminder.js          # Cron job for reminders
 │   └── server.js            # Express app entry point
 └── frontend/
-├── index.html           # Login page
-├── app.html             # Main app
-├── js/
-│   ├── app.js           # Main frontend logic
-│   └── auth.js          # Auth logic
-└── css/
-└── style.css---
+    ├── index.html           # Login page
+    ├── app.html             # Main app
+    ├── js/
+    │   ├── app.js           # Main frontend logic
+    │   └── auth.js          # Auth logic
+    └── css/
+        └── style.css
+\
+---
 
 ## 🔒 Security
 
