@@ -72,17 +72,19 @@ A full-stack note-taking web application with smart review reminders, AI assista
 - Gmail account (for email features)
 
 ### 1. Clone the repository
-\\ash
+```bash
 git clone https://github.com/Hungson2000/noteapp.git
 cd noteapp
-\
+```
+
 ### 2. Setup Backend
-\\ash
+```bash
 cd backend
 npm install
-\
-Create a \.env\ file in the \ackend\ folder:
-\\env
+```
+
+Create a `.env` file in the `backend` folder:
+```env
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
@@ -100,20 +102,24 @@ VAPID_EMAIL=mailto:your@email.com
 
 GEMINI_API_KEY=your_gemini_api_key
 FRONTEND_URL=http://localhost:3000
-\
-Start the backend:
-\\ash
-npm run dev
-\
-### 3. Setup Frontend
-Open \rontend/index.html\ in your browser, or use Live Server in VS Code.
+```
 
-> Make sure the API URL in the frontend JS points to \http://localhost:5000
+Start the backend:
+```bash
+npm run dev
+```
+
+### 3. Setup Frontend
+Open `frontend/index.html` in your browser, or use Live Server in VS Code.
+
+> Make sure the API URL in the frontend JS points to `http://localhost:5000`
+
 ---
 
 ## 📁 Project Structure
 
-\noteapp/
+```
+noteapp/
 ├── backend/
 │   ├── middleware/
 │   │   ├── auth.js          # JWT middleware
@@ -137,7 +143,8 @@ Open \rontend/index.html\ in your browser, or use Live Server in VS Code.
     │   └── auth.js          # Auth logic
     └── css/
         └── style.css
-\
+```
+
 ---
 
 ## 🔒 Security
