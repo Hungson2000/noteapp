@@ -1,71 +1,158 @@
 ﻿# 📝 NoteApp
 
-> Ứng dụng ghi chú thông minh full-stack với AI, nhắc nhở, chia sẻ và nhiều tính năng hiện đại.
+A full-stack note-taking web application with smart review reminders, AI assistant, and productivity tools — built for students and learners.
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-noteapp--hungson.vercel.app-6366f1?style=for-the-badge)](https://noteapp-hungson.vercel.app)
-[![GitHub](https://img.shields.io/badge/GitHub-Hungson2000-181717?style=for-the-badge&logo=github)](https://github.com/Hungson2000/noteapp)
+🌐 **Live Demo:** [noteapp-hungson.vercel.app](https://noteapp-hungson.vercel.app)
 
-## ✨ Tính năng nổi bật
+---
 
-- 📋 Tạo, sửa, xóa ghi chú với rich text editor
-- 📁 Phân loại theo Folder và Tags
-- 📌 Ghim ghi chú quan trọng
-- 🔍 Tìm kiếm thông minh với Fuse.js
-- 🔐 Xác thực JWT, khóa ghi chú bằng mật khẩu
-- 🤖 AI Tóm tắt bằng Gemini API
-- 📲 Chia sẻ ghi chú + QR Code
-- 🔔 Push Notification + nhắc nhở qua email
-- 📊 Dashboard, biểu đồ Chart.js
-- 🍅 Pomodoro Timer, Kanban Board
-- 🎙️ Voice Note, Markdown Preview
-- 🌙 Dark Mode, 5 Themes
-- 📱 PWA - cài được trên điện thoại
-- ⌨️ Keyboard Shortcuts
+## ✨ Features
 
-## 🛠️ Tech Stack
+### 📒 Notes
+- Create, edit, delete notes with title, content, tags, and folders
+- Soft delete with trash bin & permanent delete
+- Pin important notes
+- Share notes via public link
+- Export notes as TXT or PDF
 
-| Phần | Công nghệ |
-|------|-----------|
-| Frontend | Vanilla JS, HTML5, CSS3 |
+### 🧠 Smart Review System
+- Tracks last review date and review count per note
+- Color-coded overdue indicators (not reviewed in X days)
+- Email & push notification reminders via cron job
+
+### 🤖 AI Assistant
+- Powered by Google Gemini API
+- Summarize, expand, or improve note content
+
+### 📅 Productivity Tools
+- **Calendar** — view notes by date
+- **Kanban Board** — drag-and-drop task management
+- **Pomodoro Timer** — focus sessions built-in
+- **Daily Goal** — set and track daily note targets
+- **Streak Tracker** — maintain your learning streak
+- **Charts** — visualize your note activity
+
+### 🎨 Customization
+- Dark Mode
+- Multiple color themes
+- Custom avatar upload (Cloudinary)
+
+### 🔐 Authentication
+- Register / Login with JWT
+- Change password & profile info
+- Forgot password via email (reset link)
+- Web Push Notifications (VAPID)
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | HTML, CSS, Vanilla JavaScript (PWA) |
 | Backend | Node.js, Express.js |
-| Database | MongoDB Atlas |
-| Auth | JWT, Bcrypt |
-| Storage | Cloudinary |
-| Email | Nodemailer |
+| Database | MongoDB Atlas (Mongoose) |
+| Auth | JWT, bcryptjs |
+| File Upload | Cloudinary, Multer |
+| Email | Nodemailer (Gmail) |
+| Push Notifications | Web Push (VAPID) |
 | AI | Google Gemini API |
-| Deploy | Vercel + Render |
+| Scheduler | node-cron |
+| Validation | express-validator |
+| Deployment | Vercel (Frontend), Render (Backend) |
 
-## 🚀 Chạy Local
+---
 
+## 🚀 Getting Started (Local)
+
+### Prerequisites
+- Node.js >= 18
+- MongoDB Atlas account
+- Cloudinary account
+- Gmail account (for email features)
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/Hungson2000/noteapp.git
+cd noteapp
+```
+
+### 2. Setup Backend
 ```bash
 cd backend
 npm install
+```
+
+Create a `.env` file in the `backend` folder:
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+
+EMAIL_USER=your_gmail@gmail.com
+EMAIL_PASS=your_gmail_app_password
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_EMAIL=mailto:your@email.com
+
+GEMINI_API_KEY=your_gemini_api_key
+FRONTEND_URL=http://localhost:3000
+```
+
+Start the backend:
+```bash
 npm run dev
 ```
 
-Tạo file `.env` trong `backend/`:
-```env
-MONGO_URI=...
-JWT_SECRET=...
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
-GEMINI_API_KEY=...
-EMAIL_USER=...
-EMAIL_PASS=...
-VAPID_PUBLIC_KEY=...
-VAPID_PRIVATE_KEY=...
-VAPID_EMAIL=...
-PORT=5000
-```
+### 3. Setup Frontend
+Open `frontend/index.html` in your browser, or use Live Server in VS Code.
 
-## 🌐 Demo
+> Make sure the API URL in the frontend JS points to `http://localhost:5000`
 
-- Frontend: https://noteapp-hungson.vercel.app
-- Backend: https://noteapp-backend-goqh.onrender.com
+---
 
-## 👤 Tác giả
+## 📁 Project Structurenoteapp/
+├── backend/
+│   ├── middleware/
+│   │   ├── auth.js          # JWT middleware
+│   │   └── validate.js      # Input validation rules
+│   ├── models/
+│   │   ├── User.js
+│   │   └── Note.js
+│   ├── routes/
+│   │   ├── auth.js          # Auth & user routes
+│   │   ├── notes.js         # Note CRUD routes
+│   │   ├── ai.js            # Gemini AI route
+│   │   └── push.js          # Push notification route
+│   ├── cloudinary.js        # Cloudinary config
+│   ├── reminder.js          # Cron job for reminders
+│   └── server.js            # Express app entry point
+└── frontend/
+├── index.html           # Login page
+├── app.html             # Main app
+├── js/
+│   ├── app.js           # Main frontend logic
+│   └── auth.js          # Auth logic
+└── css/
+└── style.css---
 
-**Lê Hùng Sơn** - Sinh viên Kỹ thuật Phần mềm - Đại học Duy Tân
+## 🔒 Security
 
-GitHub: [@Hungson2000](https://github.com/Hungson2000)
+- JWT authentication on all protected routes
+- Rate limiting: 5 login attempts per 15 minutes
+- Input validation on all POST/PUT routes
+- Passwords hashed with bcryptjs (salt rounds: 10)
+- Environment variables for all secrets (never committed to Git)
+
+---
+
+## 👨‍💻 Author
+
+**Hung Son** — [@Hungson2000](https://github.com/Hungson2000)
+
+> Built as a personal full-stack learning project. Feedback and contributions are welcome!
